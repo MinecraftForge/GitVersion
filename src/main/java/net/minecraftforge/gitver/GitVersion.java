@@ -217,6 +217,11 @@ public class GitVersion implements AutoCloseable {
         );
     }
 
+    /** @return The tag prefix used when filtering tags */
+    public String getTagPrefix() {
+        return this.tagPrefix;
+    }
+
     /**
      * Sets the tag prefix to use when filtering tags. This will queue the {@linkplain #getInfo() info} to be
      * recalculated the next time it is needed.
@@ -226,6 +231,17 @@ public class GitVersion implements AutoCloseable {
     public void setTagPrefix(@Nullable String tagPrefix) {
         this.tagPrefix = StringUtils.isEmptyOrNull(tagPrefix) ? "" : tagPrefix;
         this.info.reset();
+    }
+
+    /**
+     * Sets the match filter to use when filtering tags. This will queue the {@linkplain #getInfo() info} to be
+     * recalculated the next time it is needed.
+     *
+     * @param matchFilter The match filters
+     * @see #setMatchFilters(String...)
+     */
+    public void setMatchFilter(String matchFilter) {
+        this.setMatchFilters(matchFilter);
     }
 
     /**
@@ -240,6 +256,17 @@ public class GitVersion implements AutoCloseable {
     }
 
     /**
+     * Adds the given match filter to the existing filters to use. This will queue the {@linkplain #getInfo() info} to
+     * be recalculated the next time it is needed.
+     *
+     * @param matchFilter The match filters
+     * @see #addMatchFilters(String...)
+     */
+    public void addMatchFilter(String matchFilter) {
+        this.addMatchFilters(matchFilter);
+    }
+
+    /**
      * Adds the given match filters to the existing filters to use. This will queue the {@linkplain #getInfo() info} to
      * be recalculated the next time it is needed.
      *
@@ -248,6 +275,16 @@ public class GitVersion implements AutoCloseable {
     public void addMatchFilters(String... matchFilters) {
         this.matchFilters.addAll(Arrays.asList(matchFilters));
         this.info.reset();
+    }
+
+    /**
+     * Sets the marker file name to use. This will queue the {@linkplain #getInfo() info} to be recalculated the next
+     * time it is needed.
+     *
+     * @param markerName The marker file names
+     */
+    public void setMarkerName(String markerName) {
+        this.setMarkerName(new String[] {markerName});
     }
 
     /**
@@ -265,10 +302,23 @@ public class GitVersion implements AutoCloseable {
     }
 
     /**
+     * Sets the ignore file name to use. This will queue the {@linkplain #getInfo() info} to be recalculated the next
+     * time it is needed.
+     *
+     * @param ignoreName The ignore file names
+     * @see #DEFAULT_IGNORE_FILE
+     * @see #setIgnoreName(String...)
+     */
+    public void setIgnoreName(String ignoreName) {
+        this.setIgnoreName(new String[] {ignoreName});
+    }
+
+    /**
      * Sets the ignore file names to use. This will queue the {@linkplain #getInfo() info} to be recalculated the next
      * time it is needed.
      *
      * @param ignoreName The ignore file names
+     * @see #DEFAULT_IGNORE_FILE
      */
     public void setIgnoreName(String... ignoreName) {
         this.ignoreName.clear();
@@ -279,8 +329,18 @@ public class GitVersion implements AutoCloseable {
     }
 
     /**
-     * Sets the directories to ignore. This will queue the {@linkplain #getInfo() info} to be recalculated the next
-     * time it is needed.
+     * Sets the directory to ignore. This will queue the {@linkplain #getInfo() info} to be recalculated the next time
+     * it is needed.
+     *
+     * @param ignoreDir The ignored directories
+     */
+    public void setIgnoreDir(File ignoreDir) {
+        this.setIgnoreDir(new File[] {ignoreDir});
+    }
+
+    /**
+     * Sets the directories to ignore. This will queue the {@linkplain #getInfo() info} to be recalculated the next time
+     * it is needed.
      *
      * @param ignoreDir The ignored directories
      */
