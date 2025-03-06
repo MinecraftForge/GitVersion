@@ -56,6 +56,10 @@ public final class GitUtils {
         return getRelativePath(root.toPath(), file.toPath());
     }
 
+    public static String getRelativePath(File file) {
+        return getRelativePath(GitUtils.findGitRoot(file), file);
+    }
+
     /**
      * Attempts to find the git root from the given directory.
      *

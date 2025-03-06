@@ -74,12 +74,18 @@ public class GitVersion implements AutoCloseable {
     /**
      * Creates a new GitVersion instance with the given project directory and configuration.
      *
-     * @param project The project directory
+     * @param project The git directory directory
      * @param config  The config file to use
      * @throws IllegalArgumentException If the project directory is not within a Git repository
      */
     public GitVersion(File project, GitVersionConfig config) {
         this(project, config.markerFile, config.ignoreFile, config.ignoredDirs.stream().map(dir -> new File(project, dir)).toList());
+        this.setTagPrefix(config.tagPrefix);
+        this.matchFilters.addAll(config.matchFilters);
+    }
+
+    public GitVersion(File gitDir, String projectPath, GitVersionConfig config) {
+        this(gitDir, new File(gitDir.getParentFile(), projectPath), config.markerFile, config.ignoreFile, config.ignoredDirs.stream().map(dir -> new File(new File(gitDir.getParentFile(), projectPath), dir)).toList());
         this.setTagPrefix(config.tagPrefix);
         this.matchFilters.addAll(config.matchFilters);
     }
@@ -94,8 +100,16 @@ public class GitVersion implements AutoCloseable {
      * @throws IllegalArgumentException If the project directory is not within a Git repository
      */
     public GitVersion(File project, Iterable<String> markerName, Iterable<String> ignoreName, Iterable<File> ignoredDirs) {
-        this.root = GitUtils.findGitRoot(project);
-        this.gitDir = new File(this.root, ".git");
+        this(new File(GitUtils.findGitRoot(project), ".git"), project, markerName, ignoreName, ignoredDirs);
+    }
+
+    public GitVersion(File gitDir, File project, Iterable<String> markerName, Iterable<String> ignoreName, Iterable<File> ignoredDirs) {
+        this(gitDir.getParentFile(), gitDir, project, markerName, ignoreName, ignoredDirs);
+    }
+
+    public GitVersion(File root, File gitDir, File project, Iterable<String> markerName, Iterable<String> ignoreName, Iterable<File> ignoredDirs) {
+        this.root = root;
+        this.gitDir = gitDir;
         if (!this.gitDir.exists())
             throw new IllegalArgumentException("Root directory is not a git repository!");
 
