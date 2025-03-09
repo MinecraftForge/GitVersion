@@ -130,8 +130,12 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
                     else
                         it.setExclude("*-*");
 
-                    for (String filter : this.filters)
-                        it.setMatch(filter);
+                    for (String filter : this.filters) {
+                        if (filter.startsWith("!"))
+                            it.setExclude(filter.substring(1));
+                        else
+                            it.setMatch(filter);
+                    }
                 } catch (Exception e) {
                     Util.sneak(e);
                 }
