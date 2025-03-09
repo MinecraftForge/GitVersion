@@ -59,29 +59,6 @@ public interface GitUtils {
     }
 
     /**
-     * Attempts to find the git root from the given directory.
-     *
-     * @param from The file to find the Git root from
-     * @return The Git root, or the given file if no Git root was found
-     */
-    static File findGitRoot(File from) {
-        for (var dir = from.getAbsoluteFile(); dir != null; dir = dir.getParentFile())
-            if (isGitRoot(dir)) return dir;
-
-        return from;
-    }
-
-    /**
-     * Checks if a given file is a Git root.
-     *
-     * @param dir The directory to check
-     * @return {@code true} if the directory is a Git root
-     */
-    static boolean isGitRoot(File dir) {
-        return new File(dir, ".git").exists();
-    }
-
-    /**
      * Counts commits, for the given Git repository, from the given tag to {@linkplain Constants#HEAD HEAD}. If the
      * given tag cannot be found, this method will return {@code -1}.
      * <p>

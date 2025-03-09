@@ -127,7 +127,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
                 throw new IllegalArgumentException("Either the root or project directory must be set");
 
             if (this.root == null)
-                this.root = GitUtils.findGitRoot(this.project);
+                this.root = findGitRoot(this.project);
 
             if (this.project == null)
                 this.project = this.root;
@@ -378,6 +378,30 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
     }
 
     /**
+     * Attempts to find the git root from the given directory, using {@linkplain File#getAbsoluteFile() absolute files}
+     * to walk the filesystem.
+     *
+     * @param from The file to find the Git root from
+     * @return The Git root, or the given file if no Git root was found
+     */
+    static File findGitRoot(File from) {
+        for (var dir = from.getAbsoluteFile(); dir != null; dir = dir.getParentFile())
+            if (isGitRoot(dir)) return dir;
+
+        return from;
+    }
+
+    /**
+     * Checks if a given file is a Git root.
+     *
+     * @param dir The directory to check
+     * @return {@code true} if the directory is a Git root
+     */
+    static boolean isGitRoot(File dir) {
+        return new File(dir, ".git").exists();
+    }
+
+    /**
      * Attempts to get the relative path of the given file from the root of its Git repository. This is exposed
      * primarily to allow Gradle plugins to get the relative path without needing to declare the path directory
      * directly, as it can cause issues with task configuration.
@@ -390,7 +414,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      */
     @Deprecated(forRemoval = true)
     static String findRelativePath(File file) {
-        return GitUtils.getRelativePath(GitUtils.findGitRoot(file), file);
+        return GitUtils.getRelativePath(findGitRoot(file), file);
     }
 
 
