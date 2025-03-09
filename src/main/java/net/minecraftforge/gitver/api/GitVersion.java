@@ -138,7 +138,14 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
             if (this.config == null)
                 this.config = GitVersionConfig.parse(new File(this.root, ".gitversion"));
 
-            return new GitVersionImpl(this.gitDir, this.root, this.project, this.config, this.strict);
+            try {
+                return new GitVersionImpl(this.gitDir, this.root, this.project, this.config, this.strict);
+            } catch (GitVersionException e) {
+                if (!this.strict)
+                    return GitVersionImpl.emptyFor(this.project);
+
+                throw e;
+            }
         }
     }
 

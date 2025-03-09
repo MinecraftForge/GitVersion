@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public final class GitVersionImpl implements GitVersion {
+public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.Empty {
     // Git
     private final boolean strict;
     private Git git;
@@ -53,11 +53,11 @@ public final class GitVersionImpl implements GitVersion {
         this.gitDir = gitDir;
         this.root = root;
         if (!this.gitDir.exists())
-            throw new GitVersionExceptionInternal("Root directory is not a git repository!");
+            throw new GitVersionExceptionInternal("Root directory is not a git repository");
 
         this.project = project;
         if (this.project.compareTo(this.root) < 0)
-            throw new IllegalArgumentException("Project directory must be (a subdirectory of) the root directory!");
+            throw new IllegalArgumentException("Project directory must be (a subdirectory of) the root directory");
 
         try {
             config.validate(this.root);
@@ -296,5 +296,78 @@ public final class GitVersionImpl implements GitVersion {
 
         this.git.close();
         this.git = null;
+    }
+
+
+    /* EMPTY */
+
+    public static GitVersion emptyFor(File project) {
+        return new Empty(project);
+    }
+
+    private GitVersionImpl() {
+        this.strict = false;
+        this.gitDir = null;
+        this.root = null;
+        this.project = null;
+        this.localPath = "";
+        this.tagPrefix = "";
+        this.filters = new String[0];
+        this.subprojects = Collections.emptyList();
+        this.filtersView = Collections.emptyList();
+    }
+
+    private static final class Empty extends GitVersionImpl {
+        private final File project;
+
+        public Empty(File project) {
+            super();
+            this.project = project;
+        }
+
+        @Override
+        public String generateChangelog(@Nullable String start, @Nullable String url, boolean plainText) throws GitVersionException {
+            throw new GitVersionExceptionInternal("Cannot generate a changelog without a repository");
+        }
+
+        @Override
+        public GitVersion.Info getInfo() {
+            return GitVersionImpl.Info.EMPTY;
+        }
+
+        @Override
+        public String getTagPrefix() {
+            throw new GitVersionExceptionInternal("Cannot get tag prefix from an empty repository");
+        }
+
+        @Override
+        public @UnmodifiableView Collection<String> getFilters() {
+            throw new GitVersionExceptionInternal("Cannot get filters from an empty repository");
+        }
+
+        @Override
+        public File getGitDir() {
+            throw new GitVersionExceptionInternal("Cannot get git directory from an empty repository");
+        }
+
+        @Override
+        public File getRoot() {
+            throw new GitVersionExceptionInternal("Cannot get root directory from an empty repository");
+        }
+
+        @Override
+        public File getProject() {
+            return this.project;
+        }
+
+        @Override
+        public String getProjectPath() {
+            throw new GitVersionExceptionInternal("Cannot get project path from root with an empty repository");
+        }
+
+        @Override
+        public @UnmodifiableView Collection<File> getSubprojects() {
+            throw new GitVersionExceptionInternal("Cannot get subprojects from an empty repository");
+        }
     }
 }
