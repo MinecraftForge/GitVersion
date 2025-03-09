@@ -567,14 +567,14 @@ public interface GitUtils {
         //Grab its string representation and process.
         var originUrlString = originUrl.toString();
         //Determine the protocol
-        if (originUrlString.startsWith("ssh")) {
+        if (originUrlString.lastIndexOf(':') > "https://".length()) {
             //If ssh then check for authentication data.
             if (originUrlString.contains("@")) {
                 //We have authentication data: Strip it.
-                return "https://" + originUrlString.substring(originUrlString.indexOf("@") + 1).replace(".git", "");
+                return "https://" + originUrlString.substring(originUrlString.indexOf("@") + 1).replace(".git", "").replace(':', '/');
             } else {
                 //No authentication data: Switch to https.
-                return "https://" + originUrlString.substring(6).replace(".git", "");
+                return "https://" + originUrlString.replace("ssh://", "").replace(".git", "").replace(':', '/');
             }
         } else if (originUrlString.startsWith("http")) {
             //Standard http protocol: Strip the ".git" ending only.
