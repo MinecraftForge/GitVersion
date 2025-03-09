@@ -53,7 +53,7 @@ public final class GitVersionImpl implements GitVersion {
         this.gitDir = gitDir;
         this.root = root;
         if (!this.gitDir.exists())
-            throw new IllegalArgumentException("Root directory is not a git repository!");
+            throw new GitVersionExceptionInternal("Root directory is not a git repository!");
 
         this.project = project;
         if (this.project.compareTo(this.root) < 0)
