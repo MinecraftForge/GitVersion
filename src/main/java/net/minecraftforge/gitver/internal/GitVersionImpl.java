@@ -317,10 +317,10 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         this.filtersView = Collections.emptyList();
     }
 
-    private static final class Empty extends GitVersionImpl {
+    static final class Empty extends GitVersionImpl {
         private final File project;
 
-        public Empty(File project) {
+        private Empty(File project) {
             super();
             this.project = project;
         }
