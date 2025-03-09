@@ -21,7 +21,6 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -40,12 +39,12 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
     public final String localPath;
 
     // Config
-    private final String tagPrefix;
-    private final String[] filters;
+    private String tagPrefix;
+    private String[] filters;
     private final List<File> subprojects;
 
     // Unmodifiable views
-    private final List<String> filtersView;
+    private final Lazy<List<String>> filtersView = Lazy.of(() -> this.filters.length == 0 ? Collections.emptyList() : List.of(this.filters));
 
     public GitVersionImpl(File gitDir, File root, File project, GitVersionConfig config, boolean strict) {
         this.strict = strict;
@@ -73,8 +72,6 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         this.tagPrefix = projectConfig.getTagPrefix();
         this.filters = projectConfig.getFilters();
         this.subprojects = this.calculateSubprojects(config.getAllProjects());
-
-        this.filtersView = this.filters.length == 0 ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(this.filters));
     }
 
 
@@ -212,8 +209,21 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
     }
 
     @Override
+    public void setTagPrefix(String tagPrefix) {
+        this.tagPrefix = tagPrefix;
+        this.info.reset();
+    }
+
+    @Override
     public @UnmodifiableView Collection<String> getFilters() {
-        return this.filtersView;
+        return this.filtersView.get();
+    }
+
+    @Override
+    public void setFilters(String... filters) {
+        this.filters = filters;
+        this.filtersView.reset();
+        this.info.reset();
     }
 
 
@@ -326,7 +336,6 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         this.tagPrefix = "";
         this.filters = new String[0];
         this.subprojects = Collections.emptyList();
-        this.filtersView = Collections.emptyList();
     }
 
     static non-sealed class Empty extends GitVersionImpl {

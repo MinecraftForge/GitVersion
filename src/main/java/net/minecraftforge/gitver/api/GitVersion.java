@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -329,8 +330,37 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
     /** @return The tag prefix used when filtering tags */
     String getTagPrefix();
 
+    /**
+     * Sets the tag prefix to use when filtering tags.
+     *
+     * @param tagPrefix The tag prefix
+     * @deprecated This method only exists for backwards compatibility in GradleUtils 2.4. Using this is discouraged
+     * since it breaks the contract that the {@linkplain GitVersionConfig config} has the declarations of all the
+     * project's values, including the {@linkplain GitVersionConfig.Project#getTagPrefix() tag prefix} and any
+     * additional {@linkplain GitVersionConfig.Project#getFilters() filters}.
+     */
+    @Deprecated
+    default void setTagPrefix(String tagPrefix) { }
+
     /** @return The filters used when filtering tags (excluding the {@linkplain #getTagPrefix() tag prefix}) */
     @UnmodifiableView Collection<String> getFilters();
+
+    /** @see #setFilters(String...) */
+    default void setFilters(Collection<String> filters) {
+        this.setFilters(filters.toArray(new String[0]));
+    }
+
+    /**
+     * Sets the filters to use when filtering tags (excluding the {@linkplain #getTagPrefix() tag prefix}).
+     *
+     * @param filters The filters
+     * @deprecated This method only exists for backwards compatibility in GradleUtils 2.4. Using this is discouraged
+     * since it breaks the contract that the {@linkplain GitVersionConfig config} has the declarations of all the
+     * project's values, including the {@linkplain GitVersionConfig.Project#getTagPrefix() tag prefix} and any
+     * additional {@linkplain GitVersionConfig.Project#getFilters() filters}.
+     */
+    @Deprecated
+    default void setFilters(String... filters) { }
 
 
     /* FILE SYSTEM */
