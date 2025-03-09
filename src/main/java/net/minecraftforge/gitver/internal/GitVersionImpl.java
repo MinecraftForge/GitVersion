@@ -148,11 +148,10 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             }); // matches Repository.getFullBranch() but returning null when on a detached HEAD
 
             var ret = Info.builder();
-            var tag = Util.make(() -> {
+            ret.tag = Util.make(() -> {
                 var t = desc[0].substring(this.tagPrefix.length());
                 return t.substring((t.indexOf('v') == 0 || t.indexOf('-') == 0) && t.length() > 1 && Character.isDigit(t.charAt(1)) ? 1 : 0);
             });
-            ret.tag = tag;
 
             ret.offset = commitCountProvider.getAsString(this.git, desc[0], desc[1], this.strict);
             ret.hash = desc[2];
@@ -301,8 +300,17 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
 
     /* EMPTY */
 
+    public static GitVersion empty() {
+        return new Empty();
+    }
+
     public static GitVersion emptyFor(File project) {
-        return new Empty(project);
+        return project == null ? empty() : new Empty() {
+            @Override
+            public File getProject() {
+                return project;
+            }
+        };
     }
 
     private GitVersionImpl() {
@@ -317,13 +325,8 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         this.filtersView = Collections.emptyList();
     }
 
-    static final class Empty extends GitVersionImpl {
-        private final File project;
-
-        private Empty(File project) {
-            super();
-            this.project = project;
-        }
+    static non-sealed class Empty extends GitVersionImpl {
+        private Empty() { }
 
         @Override
         public String generateChangelog(@Nullable String start, @Nullable String url, boolean plainText) throws GitVersionException {
@@ -357,7 +360,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
 
         @Override
         public File getProject() {
-            return this.project;
+            throw new GitVersionExceptionInternal("Cannot get project directory without a project");
         }
 
         @Override
