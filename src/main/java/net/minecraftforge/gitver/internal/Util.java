@@ -80,8 +80,9 @@ public interface Util {
      * @param <T>      The type of element
      * @return The first element, or {@code null} if the iterable is empty
      */
-    static <T> @Nullable T findFirst(Iterable<T> iterable) {
-        for (var t : iterable) return t;
+    static <T> @Nullable T findFirst(@Nullable Iterable<T> iterable) {
+        if (iterable != null)
+            for (var t : iterable) return t;
         return null;
     }
 
@@ -113,8 +114,8 @@ public interface Util {
         return s != null ? action.apply(s) : s;
     }
 
-    static String orElse(String s, Supplier<String> ifEmptyOrNull) {
-        return !StringUtils.isEmptyOrNull(s) ? s : ifEmptyOrNull.get();
+    static <T> T orElse(T t, Supplier<T> ifEmptyOrNull) {
+        return t != null && !t.equals("") ? t : ifEmptyOrNull.get();
     }
 
     static String[] ensure(String[] array) {

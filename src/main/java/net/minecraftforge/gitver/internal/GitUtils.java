@@ -553,15 +553,17 @@ public interface GitUtils {
         }
 
         //Get the origin remote.
-        var originRemote = Util.findFirst(remotes, remote -> "origin".equals(remote.getName()));
 
-        //We do not have an origin named remote
-        if (originRemote == null) return null;
+        var originRemote =
+            remotes.stream()
+                   // First try finding the remote that has MinecraftForge
+                   .filter(it -> it.getURIs().stream().anyMatch(uri -> uri.toString().contains("MinecraftForge/"))).findFirst()
+                   // Ok, just get the origin then
+                   .orElseGet(() -> remotes.stream().filter(remote -> "origin".equals(remote.getName())).findFirst()
+                                           // No origin? Get whatever we can get our hands on
+                                           .orElseGet(() -> remotes.get(0)));
 
-        //Get the origin push url.
         var originUrl = Util.findFirst(originRemote.getURIs());
-
-        //We do not have a origin url
         if (originUrl == null) return null;
 
         //Grab its string representation and process.
