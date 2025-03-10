@@ -268,6 +268,14 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
     Info getInfo() throws GitVersionException;
 
     /**
+     * Gets the URL of the Git repository. This is used to generate the changelog, and is exposed here to allow access
+     * to it for other purposes, such as setting links in a Maven POM.
+     *
+     * @return The URL of the Git repository, or {@code null} if there is none
+     */
+    @Nullable String getUrl();
+
+    /**
      * Represents information about a git repository. This can be used to access other information when the standard
      * versioning methods in {@link GitVersion} do not suffice.
      */
@@ -321,6 +329,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
         String getAbbreviatedId();
 
         /** @return The path URL, or {@code null} if there is none */
+        @Deprecated(forRemoval = true, since = "0.2")
         @Nullable String getUrl();
     }
 

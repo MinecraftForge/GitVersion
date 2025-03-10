@@ -31,6 +31,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
     private final boolean strict;
     private Git git;
     private final Lazy<Info> info = Lazy.of(() -> this.calculateInfo(this::getSubprojectCommitCount));
+    private final Lazy<String> url = Lazy.of(this::calculateUrl);
     private boolean closed = false;
 
     // Filesystem
@@ -113,6 +114,11 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         return this.info.get();
     }
 
+    @Override
+    public @Nullable String getUrl() {
+        return this.url.get();
+    }
+
     /** @see #info */
     private Info calculateInfo(CommitCountProvider commitCountProvider) {
         try {
@@ -173,15 +179,26 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         }
     }
 
+    /** @see #url */
+    private @Nullable String calculateUrl() {
+        try {
+            this.open();
+
+            return GitUtils.buildProjectUrl(this.git);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     /** @see GitVersion.Info */
     public record Info(
-        @Override String getTag,
-        @Override String getOffset,
-        @Override String getHash,
-        @Override String getBranch,
-        @Override String getCommit,
-        @Override String getAbbreviatedId,
-        @Override @Nullable String getUrl
+        String getTag,
+        String getOffset,
+        String getHash,
+        String getBranch,
+        String getCommit,
+        String getAbbreviatedId,
+        @Deprecated(forRemoval = true, since = "0.2") @Nullable String getUrl
     ) implements GitVersion.Info {
         private static final Info EMPTY = new Info("0.0", "0", "00000000", "master", "0000000000000000000000", "00000000", null);
 
@@ -196,7 +213,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             private String branch;
             private String commit;
             private String abbreviatedId;
-            private String url;
+            @Deprecated(forRemoval = true, since = "0.2") private String url;
 
             private Info build() {
                 return new Info(this.tag, this.offset, this.hash, this.branch, this.commit, this.abbreviatedId, this.url);
@@ -353,6 +370,11 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         @Override
         public GitVersion.Info getInfo() {
             return GitVersionImpl.Info.EMPTY;
+        }
+
+        @Override
+        public @Nullable String getUrl() {
+            return null;
         }
 
         @Override
