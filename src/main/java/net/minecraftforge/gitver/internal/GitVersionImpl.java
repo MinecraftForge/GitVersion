@@ -9,6 +9,7 @@ import net.minecraftforge.gitver.api.GitVersionConfig;
 import net.minecraftforge.gitver.api.GitVersionException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -137,6 +138,9 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
                     Util.sneak(e);
                 }
             }).call();
+
+            if (describedTag == null)
+                throw new RefNotFoundException("Tag not found! Tag prefix: %s, Filters: %s".formatted(this.tagPrefix, String.join(", ", this.filters)));
 
             var desc = Util.rsplit(describedTag, "-", 2);
 
