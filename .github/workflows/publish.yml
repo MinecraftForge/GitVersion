@@ -3,6 +3,9 @@ name: Publish
 on:
   push:
     branches: [ "master" ]
+    paths-ignore:
+      - 'README.md'
+      - 'settings.gradle'
 
 permissions:
   contents: read
@@ -12,7 +15,7 @@ jobs:
     uses: MinecraftForge/SharedActions/.github/workflows/gradle.yml@main
     with:
       java: 17
-      gradle_tasks: "publish"
+      gradle_tasks: "check publish"
       artifact_name: "git-version"
     secrets:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

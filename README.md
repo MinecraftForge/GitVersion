@@ -1,3 +1,7 @@
+> [!WARNING]
+> This README is out-of-date, and needs to be updated to reflect the current state of GitVersion and GradleUtils. This
+> will be done in due time.
+
 # Git Version
 
 GitVersion is a framework-agnostic implementation of Git-based versioning using the JGit library. While primarily
