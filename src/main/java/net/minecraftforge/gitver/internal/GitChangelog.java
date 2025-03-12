@@ -44,11 +44,11 @@ interface GitChangelog {
 
         var changeLogName = Util.replace(git.getRepository().getFullBranch(), s -> s.replace("refs/heads/", "")); //Generate a changelog name from the current branch.
 
-        var log = GitUtils.getCommitLogFromTo(git, start, end, filter); //Get all commits between the start and the end.
+        var tagMap = GitUtils.getCommitToTagMap(git, tagPrefix); //Grab a map between commits and tag names.
+        var log = GitUtils.getCommitLogFromTo(git, tagMap, start, end, tagPrefix, filter); //Get all commits between the start and the end.
         var logList = new ArrayList<RevCommit>(); //And generate a list from it.
         log.forEach(logList::add);
 
-        var tagMap = GitUtils.getCommitToTagMap(git, tagPrefix); //Grab a map between commits and tag names.
         var versionMap = GitUtils.buildVersionMap(logList, tagMap); //And generate a version map from this. Mapping each commit to a unique version.
         var primaryVersionMap = GitUtils.getPrimaryVersionMap(logList, tagMap); //Then determine which commits belong to which identifiable-version mappings.
 

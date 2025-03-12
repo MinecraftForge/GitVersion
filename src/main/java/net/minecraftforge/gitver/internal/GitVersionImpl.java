@@ -300,12 +300,10 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
 
         var includePaths = !this.localPath.isEmpty() ? Collections.singleton(this.localPath) : Collections.<String>emptySet();
         try {
-            int count = GitUtils.countCommits(git, tag, includePaths, excludePaths);
-            if (count >= 0) return count;
-
-            throw new GitVersionExceptionInternal("Couldn't find any commits with the following parameters: Tag %s, Include Paths [%s], Exclude Paths [%s]".formatted(tag, String.join(", ", includePaths), String.join(", ", excludePaths)));
+            int count = GitUtils.countCommits(git, tag, this.tagPrefix, includePaths, excludePaths);
+            return Math.max(count, 0);
         } catch (GitAPIException | IOException e) {
-            throw new GitVersionExceptionInternal("Failed to count commits", e);
+            throw new GitVersionExceptionInternal("Failed to count commits with the following parameters: Tag %s, Include Paths [%s], Exclude Paths [%s]".formatted(tag, String.join(", ", includePaths), String.join(", ", excludePaths)));
         }
     }
 

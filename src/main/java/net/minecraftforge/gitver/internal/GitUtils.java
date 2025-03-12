@@ -8,11 +8,14 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.errors.StopWalkException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.TreeRevFilter;
+import org.eclipse.jgit.revwalk.filter.OrRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.util.StringUtils;
@@ -62,7 +65,7 @@ public interface GitUtils {
      * Counts commits, for the given Git repository, from the given tag to {@linkplain Constants#HEAD HEAD}. If the
      * given tag cannot be found, this method will return {@code -1}.
      * <p>
-     * See {@link #countCommits(Git, ObjectId, Iterable, Iterable)} for more information.
+     * See {@link #countCommits(Git, Map, ObjectId, String, Iterable, Iterable)} for more information.
      *
      * @param git          The git repository to count commits in
      * @param tag          The tag name to start counting from
@@ -72,14 +75,14 @@ public interface GitUtils {
      * @throws GitAPIException If an error occurs when running the log command (see
      *                         {@link org.eclipse.jgit.api.LogCommand#call() LogCommand.call()}
      * @throws IOException     If an I/O error occurs when reading the Git repository
-     * @see #countCommits(Git, ObjectId, Iterable, Iterable)
+     * @see #countCommits(Git, Map, ObjectId, String, Iterable, Iterable)
      */
-    static int countCommits(Git git, String tag, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
+    static int countCommits(Git git, String tag, String tagPrefix, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
         var tags = GitUtils.getTagToCommitMap(git);
         var commitHash = tags.get(tag);
         if (commitHash == null) return -1;
 
-        return countCommits(git, ObjectId.fromString(commitHash), includePaths, excludePaths);
+        return countCommits(git, GitUtils.getCommitToTagMap(git), ObjectId.fromString(commitHash), tagPrefix, includePaths, excludePaths);
     }
 
     /**
@@ -102,8 +105,8 @@ public interface GitUtils {
      * @see org.eclipse.jgit.api.LogCommand LogCommand
      * @see <a href="https://git-scm.com/docs/git-log"><code>git-log</code></a>
      */
-    static int countCommits(Git git, ObjectId from, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
-        return Util.count(getCommitLogFromTo(git, from, getHead(git), includePaths, excludePaths));
+    static int countCommits(Git git, Map<String, String> commitsToTags, ObjectId from, String tagPrefix, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
+        return Util.count(getCommitLogFromTo(git, commitsToTags, from, getHead(git), tagPrefix, includePaths, excludePaths));
     }
 
     /**
@@ -157,8 +160,8 @@ public interface GitUtils {
      *                         {@link org.eclipse.jgit.api.LogCommand#call() LogCommand.call()}
      * @throws IOException     If an I/O error occurs when reading the Git repository
      */
-    static Iterable<RevCommit> getCommitLogFromTo(Git git, ObjectId from, ObjectId to, Iterable<String> includePaths) throws GitAPIException, IOException {
-        return getCommitLogFromTo(git, from, to, includePaths, Collections::emptyIterator);
+    static Iterable<RevCommit> getCommitLogFromTo(Git git, Map<String, String> tags, ObjectId from, ObjectId to, String tagPrefix, Iterable<String> includePaths) throws GitAPIException, IOException {
+        return getCommitLogFromTo(git, tags, from, to, tagPrefix, includePaths, Collections::emptyIterator);
     }
 
     /**
@@ -174,7 +177,7 @@ public interface GitUtils {
      *                         {@link org.eclipse.jgit.api.LogCommand#call() LogCommand.call()}
      * @throws IOException     If an I/O error occurs when reading the Git repository
      */
-    static Iterable<RevCommit> getCommitLogFromTo(Git git, ObjectId from, ObjectId to, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
+    static Iterable<RevCommit> getCommitLogFromTo(Git git, Map<String, String> commitsToTags, ObjectId from, ObjectId to, String tagPrefix, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
         var start = getCommitFromId(git, from);
         var end = getCommitFromId(git, to);
 
@@ -185,13 +188,25 @@ public interface GitUtils {
             log.not(parent);
         // We do not exclude the starting commit itself, so the commit is present in the returned iterable
 
-        for (var path : includePaths)
-            log.addPath(path);
+        boolean hasFilters = Util.forEach(includePaths, log::addPath) || Util.forEach(excludePaths, log::excludePath);
 
-        for (var path : excludePaths)
-            log.excludePath(path);
+        // TODO [GitVersion][JGit] PR in a solution for creating an OR rev filter
+        return Util.make((RevWalk) log.call(), walk -> {
+            if (!hasFilters || StringUtils.isEmptyOrNull(tagPrefix) || commitsToTags == null || commitsToTags.isEmpty()) return;
 
-        return log.call();
+            walk.setRevFilter(OrRevFilter.create(new TreeRevFilter(walk, walk.getTreeFilter()), new RevFilter() {
+                @Override
+                public boolean include(RevWalk walker, RevCommit cmit) throws StopWalkException {
+                    return commitsToTags.getOrDefault(ObjectId.toString(cmit), "").startsWith(tagPrefix);
+                }
+
+                @Override
+                public RevFilter clone() {
+                    throw new UnsupportedOperationException();
+                }
+            }));
+            walk.setTreeFilter(null);
+        });
     }
 
     /**

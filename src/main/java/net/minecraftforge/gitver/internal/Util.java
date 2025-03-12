@@ -101,6 +101,14 @@ public interface Util {
         return null;
     }
 
+    static <T> boolean forEach(Iterable<T> iterable, Consumer<T> action) {
+        var it = iterable.iterator();
+        if (!it.hasNext()) return false;
+
+        it.forEachRemaining(action);
+        return true;
+    }
+
     static <T> T make(Supplier<T> t) {
         return t.get();
     }

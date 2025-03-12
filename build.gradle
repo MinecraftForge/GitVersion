@@ -39,6 +39,7 @@ dependencies {
     shadowOnly libs.slf4j
     shadowOnly libs.jopt
     compileOnly libs.jopt
+    //runtimeOnly libs.jopt
 
     // Static Analysis
     compileOnly libs.nulls
