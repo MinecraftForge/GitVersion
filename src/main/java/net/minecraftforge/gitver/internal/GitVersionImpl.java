@@ -161,7 +161,9 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             var ret = Info.builder();
             ret.tag = Util.make(() -> {
                 var t = desc[0].substring(this.tagPrefix.length());
-                return t.substring((t.indexOf('v') == 0 || t.indexOf('-') == 0) && t.length() > 1 && Character.isDigit(t.charAt(1)) ? 1 : 0);
+                return t
+                    .substring(t.startsWith("-v") && t.length() > 2 ? 2 : 0)
+                    .substring((t.indexOf('v') == 0 || t.indexOf('-') == 0) && t.length() > 1 && Character.isDigit(t.charAt(1)) ? 1 : 0);
             });
 
             ret.offset = commitCountProvider.getAsString(this.git, desc[0], desc[1], this.strict);
