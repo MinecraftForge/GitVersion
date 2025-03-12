@@ -38,7 +38,7 @@ interface CommitCountProvider {
     default String getAsString(Git git, String tag, String fallback, boolean strict) throws GitVersionException {
         try {
             int result = this.get(git, tag);
-            return result > 0 ? Integer.toString(result) : fallback;
+            return result >= 0 ? Integer.toString(result) : fallback;
         } catch (GitVersionException e) {
             if (strict) throw e;
 
