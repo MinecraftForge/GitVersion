@@ -22,6 +22,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -72,7 +73,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             throw new IllegalArgumentException("Subproject '%s' is not configured in the git version config! An entry for it must exist.".formatted(this.localPath));
 
         this.tagPrefix = projectConfig.getTagPrefix();
-        this.filters = projectConfig.getFilters();
+        this.filters = this.setFiltersInternal(projectConfig.getFilters());
         this.subprojects = this.calculateSubprojects(config.getAllProjects());
     }
 
@@ -244,9 +245,13 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
 
     @Override
     public void setFilters(String... filters) {
-        this.filters = filters;
+        this.filters = this.setFiltersInternal(filters);
         this.filtersView.reset();
         this.info.reset();
+    }
+
+    private String[] setFiltersInternal(String... filters) {
+        return Arrays.stream(filters).filter(s -> s.length() > (s.startsWith("!") ? 1 : 0)).toArray(String[]::new);
     }
 
 
