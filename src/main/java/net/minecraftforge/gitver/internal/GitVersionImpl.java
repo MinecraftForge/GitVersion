@@ -73,9 +73,9 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         if (projectConfig == null)
             throw new IllegalArgumentException("Subproject '%s' is not configured in the git version config! An entry for it must exist.".formatted(this.localPath));
 
-        this.tagPrefix = projectConfig.getTagPrefix();
+        this.tagPrefix = this.setTagPrefixInternal(projectConfig.getTagPrefix());
         this.filters = this.setFiltersInternal(projectConfig.getFilters());
-        this.subprojects = this.calculateSubprojects(config.getAllProjects());
+        this.subprojects = this.setSubprojectsInternal(config.getAllProjects());
     }
 
 
@@ -131,7 +131,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
                 it.setLong(true);
 
                 try {
-                    it.setMatch("%s[[:digit:]]**".formatted(!this.tagPrefix.isEmpty() ? this.tagPrefix + "[-v]*" : ""));
+                    it.setMatch(this.tagPrefix + "[[:digit:]]**");
 
                     for (String filter : this.filters) {
                         if (filter.startsWith("!"))
@@ -145,11 +145,11 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             }).call();
 
             if (describedTag == null)
-                throw new RefNotFoundException("Tag not found! A valid tag must include a digit at the minimum! Tag prefix: %s, Filters: %s".formatted(this.tagPrefix, String.join(", ", this.filters)));
+                throw new RefNotFoundException("Tag not found! A valid tag must include a digit! Tag prefix: %s, Filters: %s".formatted(!this.tagPrefix.isEmpty() ? this.tagPrefix : "NONE!", String.join(", ", this.filters)));
 
             var desc = Util.rsplit(describedTag, "-", 2);
 
-            Ref head = this.git.getRepository().exactRef(Constants.HEAD);
+            var head = this.git.getRepository().exactRef(Constants.HEAD);
             var longBranch = Util.make(() -> {
                 if (!head.isSymbolic()) return null;
 
@@ -208,8 +208,16 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
 
     @Override
     public void setTagPrefix(String tagPrefix) {
-        this.tagPrefix = tagPrefix;
+        this.tagPrefix = this.setTagPrefixInternal(tagPrefix);
         this.info.reset();
+    }
+
+    private String setTagPrefixInternal(String tagPrefix) {
+        // String#isBlank in case a weird freak accident where the string has empty (space) characters
+        if (StringUtils.isEmptyOrNull(tagPrefix) || tagPrefix.isBlank())
+            return "";
+
+        return !tagPrefix.endsWith("-") ? tagPrefix + "-" : tagPrefix;
     }
 
     @Override
@@ -259,7 +267,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         return this.subprojects;
     }
 
-    private List<File> calculateSubprojects(Collection<GitVersionConfig.Project> projects) {
+    private List<File> setSubprojectsInternal(Collection<GitVersionConfig.Project> projects) {
         var ret = new ArrayList<File>(projects.size());
         for (var project : projects) {
             var file = new File(this.root, project.getPath()).getAbsoluteFile();
