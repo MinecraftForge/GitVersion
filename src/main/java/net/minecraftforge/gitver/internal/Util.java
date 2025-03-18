@@ -4,7 +4,6 @@
  */
 package net.minecraftforge.gitver.internal;
 
-import org.eclipse.jgit.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -84,6 +83,16 @@ public interface Util {
         if (iterable != null)
             for (var t : iterable) return t;
         return null;
+    }
+
+    @FunctionalInterface
+    interface CharPredicate { boolean test(char c); }
+    static int indexOf(String s, CharPredicate matcher, int orElse) {
+        for (var c : s.toCharArray()) {
+            if (matcher.test(c)) return s.indexOf(c);
+        }
+
+        return orElse;
     }
 
     /**

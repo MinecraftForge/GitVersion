@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.Empty {
     // Git
@@ -130,10 +131,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
                 it.setLong(true);
 
                 try {
-                    if (!this.tagPrefix.isEmpty())
-                        it.setMatch(this.tagPrefix + "**");
-                    else
-                        it.setExclude("*-*");
+                    it.setMatch("%s[[:digit:]]**".formatted(!this.tagPrefix.isEmpty() ? this.tagPrefix + "[-v]*" : ""));
 
                     for (String filter : this.filters) {
                         if (filter.startsWith("!"))
@@ -147,7 +145,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             }).call();
 
             if (describedTag == null)
-                throw new RefNotFoundException("Tag not found! Tag prefix: %s, Filters: %s".formatted(this.tagPrefix, String.join(", ", this.filters)));
+                throw new RefNotFoundException("Tag not found! A valid tag must include a digit at the minimum! Tag prefix: %s, Filters: %s".formatted(this.tagPrefix, String.join(", ", this.filters)));
 
             var desc = Util.rsplit(describedTag, "-", 2);
 
@@ -159,22 +157,16 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
                 return target != null ? target.getName() : null;
             }); // matches Repository.getFullBranch() but returning null when on a detached HEAD
 
-            var ret = Info.builder();
-            ret.tag = Util.make(() -> {
-                var t = desc[0].substring(this.tagPrefix.length());
-                return t
-                    .substring(t.startsWith("-v") && t.length() > 2 ? 2 : 0)
-                    .substring((t.indexOf('v') == 0 || t.indexOf('-') == 0) && t.length() > 1 && Character.isDigit(t.charAt(1)) ? 1 : 0);
-            });
+            var tag = desc[0].substring(Util.indexOf(desc[0], Character::isDigit, 0));
 
-            ret.offset = commitCountProvider.getAsString(this.git, desc[0], desc[1], this.strict);
-            ret.hash = desc[2];
-            if (longBranch != null) ret.branch = Repository.shortenRefName(longBranch);
-            ret.commit = ObjectId.toString(head.getObjectId());
-            ret.abbreviatedId = head.getObjectId().abbreviate(8).name();
-            ret.url = GitUtils.buildProjectUrl(this.git);
+            var offset = commitCountProvider.getAsString(this.git, desc[0], desc[1], this.strict);
+            var hash = desc[2];
+            var branch = longBranch != null ? Repository.shortenRefName(longBranch) : null;
+            var commit = ObjectId.toString(head.getObjectId());
+            var abbreviatedId = head.getObjectId().abbreviate(8).name();
+            var url = GitUtils.buildProjectUrl(this.git);
 
-            return ret.build();
+            return new Info(tag, offset, hash, branch, commit, abbreviatedId, url);
         } catch (Exception e) {
             if (this.strict) throw new GitVersionExceptionInternal("Failed to calculate version info", e);
 
@@ -204,24 +196,6 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         @Deprecated(forRemoval = true, since = "0.2") @Nullable String getUrl
     ) implements GitVersion.Info {
         private static final Info EMPTY = new Info("0.0", "0", "00000000", "master", "0000000000000000000000", "00000000", null);
-
-        private static Builder builder() {
-            return new Builder();
-        }
-
-        private static final class Builder {
-            private String tag;
-            private String offset;
-            private String hash;
-            private String branch;
-            private String commit;
-            private String abbreviatedId;
-            @Deprecated(forRemoval = true, since = "0.2") private String url;
-
-            private Info build() {
-                return new Info(this.tag, this.offset, this.hash, this.branch, this.commit, this.abbreviatedId, this.url);
-            }
-        }
     }
 
 
@@ -297,13 +271,12 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         return Collections.unmodifiableList(ret);
     }
 
-
     /** The default implementation of {@link CommitCountProvider}, ignoring subprojects */
     private int getSubprojectCommitCount(Git git, String tag) {
         var excludePaths = this.getSubprojectPaths();
         if (this.localPath.isEmpty() && excludePaths.isEmpty()) return -1;
 
-        var includePaths = !this.localPath.isEmpty() ? Collections.singleton(this.localPath) : Collections.<String>emptySet();
+        var includePaths = !this.localPath.isEmpty() ? Collections.singleton(this.localPath) : Set.<String>of();
         try {
             int count = GitUtils.countCommits(git, tag, this.tagPrefix, includePaths, excludePaths);
             return Math.max(count, 0);
