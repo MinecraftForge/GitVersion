@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -30,7 +32,7 @@ public interface Util {
     }
 
     static String[] rsplit(String input, String del, int limit) {
-        var list = new ArrayList<String>();
+        var list = new ArrayList<String>(limit > 0 ? limit : input.split(del).length);
         int count = 0;
         int index;
 
@@ -55,6 +57,22 @@ public interface Util {
         var list = new ArrayList<>(t);
         action.accept(list);
         return list;
+    }
+
+    static <T> ArrayList<T> toList(Iterable<T> t) {
+        var list = new ArrayList<T>();
+        for (var i : t) list.add(i);
+        return list;
+    }
+
+    @SuppressWarnings("unchecked")
+    static <K, V> HashMap<K, V> removePrefix(Map<K, V> map, String prefix) {
+        var ret = new HashMap<K, V>(map.size());
+        map.forEach((k, v) -> ret.put(
+            k instanceof String s && s.startsWith(prefix) ? (K) s.substring(prefix.length()) : k,
+            v instanceof String s && s.startsWith(prefix) ? (V) s.substring(prefix.length()) : v
+        ));
+        return ret;
     }
 
     /**

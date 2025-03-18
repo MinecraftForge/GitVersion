@@ -45,12 +45,11 @@ interface GitChangelog {
         var changeLogName = Util.replace(git.getRepository().getFullBranch(), s -> s.replace("refs/heads/", "")); //Generate a changelog name from the current branch.
 
         var tagMap = GitUtils.getCommitToTagMap(git, tagPrefix); //Grab a map between commits and tag names.
-        var log = GitUtils.getCommitLogFromTo(git, tagMap, start, end, tagPrefix, filter); //Get all commits between the start and the end.
-        var logList = new ArrayList<RevCommit>(); //And generate a list from it.
-        log.forEach(logList::add);
+        var log = Util.toList(GitUtils.getCommitLogFromTo(git, tagMap, start, end, tagPrefix, filter)); //Get all commits between the start and the end.
+        tagMap = Util.removePrefix(tagMap, tagPrefix); // Reassign with a new map that removes the prefix
 
-        var versionMap = GitUtils.buildVersionMap(logList, tagMap); //And generate a version map from this. Mapping each commit to a unique version.
-        var primaryVersionMap = GitUtils.getPrimaryVersionMap(logList, tagMap); //Then determine which commits belong to which identifiable-version mappings.
+        var versionMap = GitUtils.buildVersionMap(log, tagMap); //And generate a version map from this. Mapping each commit to a unique version.
+        var primaryVersionMap = GitUtils.getPrimaryVersionMap(log, tagMap); //Then determine which commits belong to which identifiable-version mappings.
 
         //Determine the length of each identifiable-versions max-length commit specific version.
         //(How wide does the area in-front of the commit message need to be to fit all versions in the current identifiable-version?)
@@ -68,7 +67,7 @@ interface GitChangelog {
 
         //Loop over all commits and append their message as a changelog.
         //(They are already in order from newest to oldest, so that works out for us.)
-        for (RevCommit commit : logList) {
+        for (RevCommit commit : log) {
             var commitHash = commit.toObjectId().name(); //Get the commit hash, so we can look it up in maps.
 
             var requiresVersionHeader = false; //Indicates later on if we need to inject a new version header.
