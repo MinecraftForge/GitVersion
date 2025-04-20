@@ -51,7 +51,7 @@ license {
     exclude '**/*.properties'
 }
 
-jar {
+tasks.named('jar', Jar) {
     manifest {
         attributes([
             'Specification-Title'   : 'Git Version',
@@ -60,17 +60,17 @@ jar {
             'Implementation-Title'  : 'Git Version',
             'Implementation-Vendor' : 'Forge Development LLC',
             'Implementation-Version': project.version
-        ] as LinkedHashMap, 'net/minecraftforge/gitver/api/')
+        ], 'net/minecraftforge/gitver/api/')
     }
 
     exclude 'net/minecraftforge/gitver/cli/**'
 }
 
-tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar).configure {
+tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
     manifest {
         attributes([
             'Main-Class': 'net.minecraftforge.gitver.cli.Main'
-        ] as LinkedHashMap)
+        ])
     }
 
     configurations = [project.configurations.runtimeClasspath, project.configurations.shadowOnly]

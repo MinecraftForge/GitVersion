@@ -512,25 +512,20 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
     /**
      * Prevents JGit's {@link SystemReader} from
      * {@linkplain SystemReader#openSystemConfig(Config, FS) reading the system configuration file}.
-     * <p>
-     * This is a <strong>potentially very destructive action</strong> since it replaces the global system reader used
+     * <p>This is a <strong>potentially very destructive action</strong> since it replaces the global system reader used
      * for all JGit operations. It should not be used in production, with the exception of the Gradle environment with
      * configuration cache. This is because reading the system configuration file requires executing the System's
-     * {@code git} command, which is not allowed when using Gradle configuration cache.
-     * <p>
-     * A preferable alternative to using this method, if applicable, is to set the
+     * {@code git} command, which is not allowed when using Gradle configuration cache.</p>
+     * <p>A preferable alternative to using this method, if applicable, is to set the
      * {@link org.eclipse.jgit.lib.Constants#GIT_CONFIG_NOSYSTEM_KEY <code>"GIT_CONFIG_NOSYSTEM"</code>} environment
-     * variable to {@code "true"}.
+     * variable to {@code "true"}.</p>
      *
-     * @return The original system reader before delegating it to disable reading the system configuration file. Use
-     * this if you plan on restoring the reader later
      * @apiNote Under no circumstances should this method be invoked in a non-Gradle production environment. If you do,
      * it is at your own risk.
      */
     @ApiStatus.Experimental
-    static SystemReader disableSystemConfig() {
-        var reader = SystemReader.getInstance();
-        SystemReader.setInstance(new SystemReader.Delegate(reader) {
+    static void disableSystemConfig() {
+        SystemReader.setInstance(new SystemReader.Delegate(SystemReader.getInstance()) {
             @Override
             public FileBasedConfig openSystemConfig(Config parent, FS fs) {
                 return new FileBasedConfig(parent, null, fs) {
@@ -544,6 +539,9 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
                 };
             }
         });
-        return reader;
+    }
+
+    static void restoreSystemReader() {
+        SystemReader.setInstance(null);
     }
 }
