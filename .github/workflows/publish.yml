@@ -17,7 +17,7 @@ jobs:
     with:
       java: 17
       gradle_tasks: "check publish"
-      artifact_name: "git-version"
+      artifact_name: "gitversion"
     secrets:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       PROMOTE_ARTIFACT_WEBHOOK: ${{ secrets.PROMOTE_ARTIFACT_WEBHOOK }}

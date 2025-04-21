@@ -59,7 +59,7 @@ public final class Main {
 
         var options = parser.parse(args);
         if (options.has(help0)) {
-            JarVersionInfo.of(GitVersion.class).hello(System.out::println, false, true);
+            System.out.println("Git Version");
             parser.printHelpOn(System.out);
             return;
         }

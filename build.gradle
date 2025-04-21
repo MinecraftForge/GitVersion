@@ -1,52 +1,58 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id 'java-library'
     id 'idea'
     id 'maven-publish'
-    id 'net.minecraftforge.licenser' version '1.1.1'
-    id 'net.minecraftforge.gradleutils' version '2.3.6'
-    id 'com.gradleup.shadow' version '8.3.6'
+    alias libs.plugins.licenser
+    alias libs.plugins.gradleutils
+    alias libs.plugins.shadow
 }
 
+final projectDisplayName = 'Git Version'
+final projectVendor = 'Forge Development LLC'
+description = 'Used by MinecraftForge projects to calculate project versions based on Git history.'
 group = 'net.minecraftforge'
-version = gradleutils.tagOffsetVersion
+version = gitversion.tagOffset
+
 println "Version: $version"
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    toolchain.languageVersion = JavaLanguageVersion.of 17
     withSourcesJar()
 }
 
-repositories {
-    maven { url = 'https://repo.eclipse.org/content/groups/releases/' }
-    mavenCentral()
-}
-
 configurations {
-    shadowOnly {
-        canBeResolved = true
-        canBeConsumed = false
+    resolvable('shadowOnly') {
+        description = 'Implementation dependencies that are not declared as required dependencies.'
+    }
+
+    named('compileOnly') {
+        extendsFrom shadowOnly
+    }
+
+    named('runtimeClasspath') {
+        extendsFrom shadowOnly
     }
 }
 
 dependencies {
     // Git
-    implementation libs.eclipse.jgit
+    implementation libs.jgit
 
-    // Utilities
+    // Config
     implementation libs.toml
 
     // CLI
     shadowOnly libs.slf4j
     shadowOnly libs.jopt
-    compileOnly libs.jopt
-    //runtimeOnly libs.jopt
 
     // Static Analysis
     compileOnly libs.nulls
 }
 
 license {
-    header = file('LICENSE-header.txt')
+    header = file 'LICENSE-header.txt'
     newLine = false
     exclude '**/*.properties'
 }
@@ -54,11 +60,11 @@ license {
 tasks.named('jar', Jar) {
     manifest {
         attributes([
-            'Specification-Title'   : 'Git Version',
-            'Specification-Vendor'  : 'Forge Development LLC',
-            'Specification-Version' : gradleutils.gitInfo.tag,
-            'Implementation-Title'  : 'Git Version',
-            'Implementation-Vendor' : 'Forge Development LLC',
+            'Specification-Title'   : projectDisplayName,
+            'Specification-Vendor'  : projectVendor,
+            'Specification-Version' : gitversion.info.tag,
+            'Implementation-Title'  : projectDisplayName,
+            'Implementation-Vendor' : projectVendor,
             'Implementation-Version': project.version
         ], 'net/minecraftforge/gitver/api/')
     }
@@ -66,14 +72,13 @@ tasks.named('jar', Jar) {
     exclude 'net/minecraftforge/gitver/cli/**'
 }
 
-tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+tasks.named('shadowJar', ShadowJar) {
     manifest {
         attributes([
             'Main-Class': 'net.minecraftforge.gitver.cli.Main'
         ])
     }
 
-    configurations = [project.configurations.runtimeClasspath, project.configurations.shadowOnly]
     archiveClassifier = 'fatjar'
     minimize()
 }
@@ -91,26 +96,21 @@ publishing {
     publications.register('mavenJava', MavenPublication) {
         from components.java
 
-        artifactId = 'git-version'
-        changelog.publish(it)
+        artifactId = project.name
+        changelog.publish it
 
-        pom {
-            name = 'Git Version'
-            description = 'Used by MinecraftForge projects to calculate project versions based on git history'
-            url = 'https://github.com/MinecraftForge/GitVersion'
+        pom { pom ->
+            name = projectDisplayName
+            description = project.description
 
-            gradleutils.pom.setGitHubDetails(pom, 'GitVersion')
+            gradleutils.pom.gitHubDetails = pom
 
-            license gradleutils.pom.licenses.LGPLv2_1
+            licenses {
+                license gradleutils.pom.licenses.LGPLv2_1
+            }
 
             developers {
-                developer {
-                    id = 'Jonathing'
-                    name = 'Jonathing'
-                    email = 'me@jonathing.me'
-                    url = 'https://jonathing.me'
-                    timezone = 'America/New_York'
-                }
+                developer gradleutils.pom.developers.Jonathing
             }
         }
     }

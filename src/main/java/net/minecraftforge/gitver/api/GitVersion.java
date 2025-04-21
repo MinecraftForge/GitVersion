@@ -23,14 +23,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * The heart of the GitVersion library. Information about how GitVersion operates can be found on the
  * <a href="https://github.com/MinecraftForge/GitVersion">path page</a>.
  */
-@NotNullByDefault
 public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl {
     /* BUILDER */
 
@@ -327,10 +325,6 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
          * @see #getCommit()
          */
         String getAbbreviatedId();
-
-        /** @return The path URL, or {@code null} if there is none */
-        @Deprecated(forRemoval = true, since = "0.2")
-        @Nullable String getUrl();
     }
 
 

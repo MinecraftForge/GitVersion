@@ -164,9 +164,8 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             var branch = longBranch != null ? Repository.shortenRefName(longBranch) : null;
             var commit = ObjectId.toString(head.getObjectId());
             var abbreviatedId = head.getObjectId().abbreviate(8).name();
-            var url = GitUtils.buildProjectUrl(this.git);
 
-            return new Info(tag, offset, hash, branch, commit, abbreviatedId, url);
+            return new Info(tag, offset, hash, branch, commit, abbreviatedId);
         } catch (Exception e) {
             if (this.strict) throw new GitVersionExceptionInternal("Failed to calculate version info", e);
 
@@ -192,10 +191,9 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         String getHash,
         String getBranch,
         String getCommit,
-        String getAbbreviatedId,
-        @Deprecated(forRemoval = true, since = "0.2") @Nullable String getUrl
+        String getAbbreviatedId
     ) implements GitVersion.Info {
-        private static final Info EMPTY = new Info("0.0", "0", "00000000", "master", "0000000000000000000000", "00000000", null);
+        private static final Info EMPTY = new Info("0.0", "0", "00000000", "master", "0000000000000000000000", "00000000");
     }
 
 

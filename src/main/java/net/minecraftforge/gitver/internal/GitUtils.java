@@ -37,8 +37,7 @@ import java.util.Set;
  * Utility class for common git operations.
  * <p>
  * This is used heavily by, and in conjunction with, GitVersion. It holds the majority of operations done on the Git
- * repository. These utilities as a part of {@code git-utils} instead of {@code git-version} so that they can be used by
- * other projects without needing to interface or bundle with GitVersion.
+ * repository.
  */
 public interface GitUtils {
     List<String> DEFAULT_ALLOWED_BRANCHES = List.of("master", "main", "HEAD");

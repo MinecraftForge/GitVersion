@@ -1,24 +1,33 @@
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
 }
 
-rootProject.name = 'git-version'
+rootProject.name = 'gitversion'
 
 dependencyResolutionManagement {
-    versionCatalogs {
-        libs {
-            // Git
-            library('eclipse-jgit', 'org.eclipse.jgit', 'org.eclipse.jgit').version('7.2.0.202503040940-r')
-
-            // Utilities
-            library('toml', 'org.tomlj', 'tomlj').version('1.1.1')
-
-            // CLI
-            library('jopt', 'net.sf.jopt-simple', 'jopt-simple').version('6.0-alpha-3')
-            library('slf4j', 'org.slf4j', 'slf4j-simple').version('1.7.36')
-
-            // Static Analysis
-            library('nulls', 'org.jetbrains', 'annotations').version('26.0.1')
-        }
+    repositories {
+        mavenCentral()
     }
+
+    //@formatter:off
+    versionCatalogs.register('libs') {
+        // Plugins
+        plugin 'licenser',    'net.minecraftforge.licenser'    version '1.2.0'
+        plugin 'gradleutils', 'net.minecraftforge.gradleutils' version '2.5.1'
+        plugin 'shadow',      'com.gradleup.shadow'            version '8.3.6'
+
+        // Git
+        library 'jgit', 'org.eclipse.jgit', 'org.eclipse.jgit' version '7.2.0.202503040940-r'
+
+        // Config
+        library 'toml', 'org.tomlj', 'tomlj' version '1.1.1'
+
+        // CLI
+        library 'jopt',  'net.sf.jopt-simple', 'jopt-simple'  version '6.0-alpha-3'
+        library 'slf4j', 'org.slf4j',          'slf4j-simple' version '1.7.36'
+
+        // Static Analysis
+        library 'nulls', 'org.jetbrains', 'annotations' version '26.0.2'
+    }
+    //@formatter:on
 }

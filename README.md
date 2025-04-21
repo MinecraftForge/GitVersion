@@ -18,7 +18,7 @@ a Gradle project, with a default implementation available in [GradleUtils](https
 GitVersion can be used as a command-line tool to generate version numbers and changelogs. You can learn more about
 its usage by running it with the help command:
 ```bash
-java -jar git-version-0.0.0-fatjar.jar --help
+java -jar gitversion-0.5.0-fatjar.jar --help
 ```
 
 An important thing to note about GitVersion is that it is designed to save a config file every time it is run unless the

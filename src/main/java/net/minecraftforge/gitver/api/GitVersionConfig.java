@@ -23,7 +23,6 @@ import java.util.function.Function;
  *
  * @see Project
  */
-@NotNullByDefault
 public sealed interface GitVersionConfig extends Function<@Nullable String, GitVersionConfig.@Nullable Project> permits GitVersionConfigImpl, GitVersionConfigImpl.Empty {
     /**
      * Gets the project at the given path.
