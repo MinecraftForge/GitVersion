@@ -1,3 +1,4 @@
+import org.gradle.api.attributes.java.TargetJvmVersion
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
@@ -23,6 +24,12 @@ java {
 }
 
 configurations {
+    named('shadowRuntimeElements') {
+        attributes {
+            attribute TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17
+        }
+    }
+
     resolvable('shadowOnly') {
         description = 'Implementation dependencies that are not declared as required dependencies.'
     }
