@@ -6,7 +6,7 @@ package net.minecraftforge.gitver.internal;
 
 import net.minecraftforge.gitver.api.GitVersionException;
 
-public final class GitVersionExceptionInternal extends GitVersionException {
+public non-sealed class GitVersionExceptionInternal extends GitVersionException {
     GitVersionExceptionInternal(String message) {
         super(message);
     }

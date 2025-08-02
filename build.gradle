@@ -44,6 +44,9 @@ dependencies {
     // Config
     implementation libs.toml
 
+    // JSON Output
+    implementation libs.gson
+
     // CLI
     shadowOnly libs.slf4j
     shadowOnly libs.jopt

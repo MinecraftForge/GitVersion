@@ -10,4 +10,5 @@ module net.minecraftforge.gitver {
 
     requires static joptsimple;
     requires static org.jetbrains.annotations;
+    requires com.google.gson;
 }

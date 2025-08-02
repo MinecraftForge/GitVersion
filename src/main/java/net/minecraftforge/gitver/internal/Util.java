@@ -4,19 +4,25 @@
  */
 package net.minecraftforge.gitver.internal;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberPolicy;
+import com.google.gson.stream.JsonReader;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-public interface Util {
+public final class Util {
     /**
      * Hacky method to throw a checked exception without declaring it.
      *
@@ -157,7 +163,38 @@ public interface Util {
         return array != null ? array : new String[0];
     }
 
-    static <T> Collection<T> ensure(@Nullable Collection<T> collection) {
+    public static <T> Collection<T> ensure(@Nullable Collection<T> collection) {
         return collection != null ? collection : Collections.emptyList();
+    }
+
+    public static <T> @Nullable T tryOrNull(Callable<@Nullable T> callable) {
+        try {
+            return callable.call();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static final Gson GSON = new GsonBuilder()
+        .setObjectToNumberStrategy(Util::readNumber)
+        .setPrettyPrinting()
+        .create();
+
+    private static Number readNumber(JsonReader in) throws IOException {
+        try {
+            return ToNumberPolicy.LONG_OR_DOUBLE.readNumber(in);
+        } catch (Throwable suppressed) {
+            try {
+                return ToNumberPolicy.BIG_DECIMAL.readNumber(in);
+            } catch (Throwable e) {
+                IOException throwing = new IOException("Failed to read number from " + in, e);
+                throwing.addSuppressed(suppressed);
+                throw throwing;
+            }
+        }
+    }
+
+    public static String toJson(Object src) {
+        return GSON.toJson(src);
     }
 }

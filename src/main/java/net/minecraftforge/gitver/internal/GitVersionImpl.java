@@ -12,23 +12,23 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnmodifiableView;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
-public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.Empty {
+public final class GitVersionImpl implements GitVersionInternal {
     // Git
     private final boolean strict;
     private Git git;
@@ -43,12 +43,10 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
     public final String localPath;
 
     // Config
-    private String tagPrefix;
-    private String[] filters;
+    // NOTE: These are not calculated lazily because they are used in both info gen and changelog gen
+    private final String tagPrefix;
+    private final List<String> filters;
     private final List<File> subprojects;
-
-    // Unmodifiable views
-    private final Lazy<List<String>> filtersView = Lazy.of(() -> this.filters.length == 0 ? Collections.emptyList() : List.of(this.filters));
 
     public GitVersionImpl(File gitDir, File root, File project, GitVersionConfig config, boolean strict) {
         this.strict = strict;
@@ -68,14 +66,12 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
             throw new IllegalArgumentException("Invalid configuration", e);
         }
 
-        this.localPath = GitVersion.super.getProjectPath();
-        var projectConfig = config.getProject(this.localPath);
-        if (projectConfig == null)
-            throw new IllegalArgumentException("Subproject '%s' is not configured in the git version config! An entry for it must exist.".formatted(this.localPath));
+        this.localPath = GitVersionInternal.super.getProjectPath();
+        var projectConfig = Objects.requireNonNull(config.getProject(this.localPath));
 
-        this.tagPrefix = this.setTagPrefixInternal(projectConfig.getTagPrefix());
-        this.filters = this.setFiltersInternal(projectConfig.getFilters());
-        this.subprojects = this.setSubprojectsInternal(config.getAllProjects());
+        this.tagPrefix = this.makeTagPrefix(projectConfig.getTagPrefix());
+        this.filters = this.makeFilters(projectConfig.getFilters());
+        this.subprojects = this.makeSubprojects(config.getAllProjects());
     }
 
 
@@ -192,7 +188,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         String getBranch,
         String getCommit,
         String getAbbreviatedId
-    ) implements GitVersion.Info {
+    ) implements GitVersionInternal.Info {
         private static final Info EMPTY = new Info("0.0", "0", "00000000", "master", "0000000000000000000000", "00000000");
     }
 
@@ -204,13 +200,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         return this.tagPrefix;
     }
 
-    @Override
-    public void setTagPrefix(String tagPrefix) {
-        this.tagPrefix = this.setTagPrefixInternal(tagPrefix);
-        this.info.reset();
-    }
-
-    private String setTagPrefixInternal(String tagPrefix) {
+    private String makeTagPrefix(String tagPrefix) {
         // String#isBlank in case a weird freak accident where the string has empty (space) characters
         if (StringUtils.isEmptyOrNull(tagPrefix) || tagPrefix.isBlank())
             return "";
@@ -219,19 +209,17 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
     }
 
     @Override
-    public @UnmodifiableView Collection<String> getFilters() {
-        return this.filtersView.get();
+    public @Unmodifiable Collection<String> getFilters() {
+        return this.filters;
     }
 
-    @Override
-    public void setFilters(String... filters) {
-        this.filters = this.setFiltersInternal(filters);
-        this.filtersView.reset();
-        this.info.reset();
-    }
-
-    private String[] setFiltersInternal(String... filters) {
-        return Arrays.stream(filters).filter(s -> s.length() > (s.startsWith("!") ? 1 : 0)).toArray(String[]::new);
+    private @Unmodifiable List<String> makeFilters(String... filters) {
+        var list = new ArrayList<String>(filters.length);
+        for (var s : filters) {
+            if (s.length() > (s.startsWith("!") ? 1 : 0))
+                list.add(s);
+        }
+        return Collections.unmodifiableList(list);
     }
 
 
@@ -261,11 +249,11 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
     /* SUBPROJECTS */
 
     @Override
-    public @UnmodifiableView Collection<File> getSubprojects() {
+    public @Unmodifiable Collection<File> getSubprojects() {
         return this.subprojects;
     }
 
-    private List<File> setSubprojectsInternal(Collection<GitVersionConfig.Project> projects) {
+    private @Unmodifiable List<File> makeSubprojects(Collection<GitVersionConfig.Project> projects) {
         var ret = new ArrayList<File>(projects.size());
         for (var project : projects) {
             var file = new File(this.root, project.getPath()).getAbsoluteFile();
@@ -289,6 +277,22 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         } catch (GitAPIException | IOException e) {
             throw new GitVersionExceptionInternal("Failed to count commits with the following parameters: Tag %s, Include Paths [%s], Exclude Paths [%s]".formatted(tag, String.join(", ", includePaths), String.join(", ", excludePaths)));
         }
+    }
+
+    private final Lazy<List<String>> subprojectPathsFromRoot = Lazy.of(() -> this.makeSubprojectPaths(true));
+    private final Lazy<List<String>> subprojectPathsFromProject = Lazy.of(() -> this.makeSubprojectPaths(false));
+
+    private List<String> makeSubprojectPaths(boolean fromRoot) {
+        return this.getSubprojects()
+                   .stream()
+                   .map(dir -> GitUtils.getRelativePath(fromRoot ? this.getRoot() : this.getProject(), dir))
+                   .filter(Predicate.not(String::isBlank))
+                   .toList();
+    }
+
+    @Override
+    public Collection<String> getSubprojectPaths(boolean fromRoot) {
+        return fromRoot ? this.subprojectPathsFromRoot.get() : this.subprojectPathsFromProject.get();
     }
 
 
@@ -319,40 +323,18 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
 
     /* EMPTY */
 
-    public static GitVersion empty() {
-        return new Empty();
+    public static GitVersion empty(@Nullable File project) {
+        return new Empty(project);
     }
 
-    public static GitVersion emptyFor(File project) {
-        return project == null ? empty() : new Empty() {
-            @Override
-            public File getProject() {
-                return project;
-            }
-        };
-    }
-
-    private GitVersionImpl() {
-        this.strict = false;
-        this.gitDir = null;
-        this.root = null;
-        this.project = null;
-        this.localPath = "";
-        this.tagPrefix = "";
-        this.filters = new String[0];
-        this.subprojects = Collections.emptyList();
-    }
-
-    static non-sealed class Empty extends GitVersionImpl {
-        private Empty() { }
-
+    public record Empty(@Nullable File project) implements GitVersionInternal {
         @Override
         public String generateChangelog(@Nullable String start, @Nullable String url, boolean plainText) throws GitVersionException {
             throw new GitVersionExceptionInternal("Cannot generate a changelog without a repository");
         }
 
         @Override
-        public GitVersion.Info getInfo() {
+        public Info getInfo() throws GitVersionException {
             return GitVersionImpl.Info.EMPTY;
         }
 
@@ -367,7 +349,7 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
         }
 
         @Override
-        public @UnmodifiableView Collection<String> getFilters() {
+        public @Unmodifiable Collection<String> getFilters() {
             throw new GitVersionExceptionInternal("Cannot get filters from an empty repository");
         }
 
@@ -383,17 +365,23 @@ public sealed class GitVersionImpl implements GitVersion permits GitVersionImpl.
 
         @Override
         public File getProject() {
+            if (this.project != null)
+                return this.project;
+
             throw new GitVersionExceptionInternal("Cannot get project directory without a project");
         }
 
         @Override
-        public String getProjectPath() {
-            throw new GitVersionExceptionInternal("Cannot get project path from root with an empty repository");
+        public @Unmodifiable Collection<File> getSubprojects() {
+            throw new GitVersionExceptionInternal("Cannot get subprojects from an empty repository");
         }
 
         @Override
-        public @UnmodifiableView Collection<File> getSubprojects() {
+        public Collection<String> getSubprojectPaths(boolean fromRoot) {
             throw new GitVersionExceptionInternal("Cannot get subprojects from an empty repository");
         }
+
+        @Override
+        public void close() { }
     }
 }
