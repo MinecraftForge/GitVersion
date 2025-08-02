@@ -13,8 +13,8 @@ dependencyResolutionManagement {
     versionCatalogs.register('libs') {
         // Plugins
         plugin 'licenser',    'net.minecraftforge.licenser'    version '1.2.0'
-        plugin 'gradleutils', 'net.minecraftforge.gradleutils' version '2.5.1'
-        plugin 'shadow',      'com.gradleup.shadow'            version '8.3.6'
+        plugin 'gradleutils', 'net.minecraftforge.gradleutils' version '2.6.0'
+        plugin 'shadow',      'com.gradleup.shadow'            version '9.0.0-rc3'
 
         // Git
         library 'jgit', 'org.eclipse.jgit', 'org.eclipse.jgit' version '7.2.0.202503040940-r'

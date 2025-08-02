@@ -1,4 +1,3 @@
-import org.gradle.api.attributes.java.TargetJvmVersion
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
@@ -11,6 +10,7 @@ plugins {
 }
 
 final projectDisplayName = 'Git Version'
+final projectArtifactId = base.archivesName = 'gitversion'
 final projectVendor = 'Forge Development LLC'
 description = 'Used by MinecraftForge projects to calculate project versions based on Git history.'
 group = 'net.minecraftforge'
@@ -19,17 +19,11 @@ version = gitversion.tagOffset
 println "Version: $version"
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of 17
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
     withSourcesJar()
 }
 
 configurations {
-    named('shadowRuntimeElements') {
-        attributes {
-            attribute TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17
-        }
-    }
-
     resolvable('shadowOnly') {
         description = 'Implementation dependencies that are not declared as required dependencies.'
     }
@@ -103,14 +97,14 @@ publishing {
     publications.register('mavenJava', MavenPublication) {
         from components.java
 
-        artifactId = project.name
+        artifactId = projectArtifactId
         changelog.publish it
 
         pom { pom ->
             name = projectDisplayName
             description = project.description
 
-            gradleutils.pom.gitHubDetails = pom
+            gradleutils.pom.setGitHubDetails(pom)
 
             licenses {
                 license gradleutils.pom.licenses.LGPLv2_1
