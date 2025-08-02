@@ -23,18 +23,18 @@ import java.util.Objects;
 
 @NotNullByDefault
 public record GitVersionConfigImpl(
-    Map<String, Project> projects,
+    Map<String, GitVersionConfig.Project> projects,
     @Override List<? extends RuntimeException> errors
-) implements GitVersionConfig {
-    public static final GitVersionConfig EMPTY = new Empty();
+) implements GitVersionConfigInternal {
+    static final GitVersionConfig EMPTY = new Empty();
 
     @Override
-    public @Nullable Project getProject(@Nullable String path) {
+    public @Nullable GitVersionConfig.Project getProject(@Nullable String path) {
         return this.projects.get(path);
     }
 
     @Override
-    public Collection<Project> getAllProjects() {
+    public Collection<GitVersionConfig.Project> getAllProjects() {
         return this.projects.values();
     }
 
@@ -54,14 +54,14 @@ public record GitVersionConfigImpl(
         if (keys.contains(""))
             throw new IllegalArgumentException("Config file cannot have a table with an empty string ([\"\"]), use [root] instead.");
 
-        var projects = new HashMap<String, GitVersionConfig.Project>();
+        var projects = new HashMap<String, GitVersionConfig.Project>(keys.size() + 1);
         projects.put("", ProjectImpl.parse(toml));
         for (var key : keys) {
             if ("root".equals(key) || !toml.isTable(key)) continue;
 
             //noinspection DataFlowIssue - checked by TomlTable#isTable
             var project = ProjectImpl.parse(key, toml.getTable(key));
-            projects.put(project.getPath, project);
+            projects.put(project.getPath(), project);
         }
 
         return new GitVersionConfigImpl(projects, toml.errors());
@@ -71,10 +71,11 @@ public record GitVersionConfigImpl(
         @Override String getPath,
         @Override String getTagPrefix,
         @Override String[] getFilters
-    ) implements GitVersionConfig.Project {
+    ) implements GitVersionConfigInternal.Project {
         private static final ProjectImpl DEFAULT_ROOT = new ProjectImpl("", "", new String[0]);
+        private static final List<GitVersionConfig.Project> DEFAULT_ROOT_LIST = List.of(DEFAULT_ROOT);
 
-        private static ProjectImpl parse(TomlParseResult toml) {
+        private static GitVersionConfig.Project parse(TomlParseResult toml) {
             var root = toml.getTableOrEmpty("root");
             if (root.isEmpty()) return DEFAULT_ROOT;
 
@@ -84,17 +85,12 @@ public record GitVersionConfigImpl(
             return new ProjectImpl("", tagPrefix, filters);
         }
 
-        private static ProjectImpl parse(String key, TomlTable table) {
+        private static GitVersionConfig.Project parse(String key, TomlTable table) {
             var project = Objects.requireNonNullElse(table.getString("path"), key);
             var tagPrefix = table.contains("tag") ? table.getString("tag") : project.replace("/", "-");
             var filters = table.getArrayOrEmpty("filters").toList().stream().map(String.class::cast).filter(s -> !s.isBlank()).toArray(String[]::new);
             //noinspection DataFlowIssue - TomlTable#getString checked by #contains
             return new ProjectImpl(project, tagPrefix, filters);
-        }
-
-        @Override
-        public String toString() {
-            return "GitVersionConfig.Project{path=%s, tagPrefix=%s, filters=[%s]}".formatted(this.getPath, this.getTagPrefix, String.join(", ", this.getFilters));
         }
 
         @Override
@@ -108,12 +104,25 @@ public record GitVersionConfigImpl(
         }
     }
 
-    public static final class Empty implements GitVersionConfig {
+    public static final class Empty implements GitVersionConfigInternal {
         private Empty() { }
 
         @Override
         public @Nullable Project getProject(@Nullable String path) {
             return path != null && path.isEmpty() ? ProjectImpl.DEFAULT_ROOT : null;
+        }
+
+        @Override
+        public Collection<GitVersionConfig.Project> getAllProjects() {
+            return ProjectImpl.DEFAULT_ROOT_LIST;
+        }
+
+        @Override
+        public void validate(@UnknownNullability File root) { }
+
+        @Override
+        public List<? extends RuntimeException> errors() {
+            return List.of();
         }
     }
 }

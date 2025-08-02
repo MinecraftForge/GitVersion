@@ -1,0 +1,45 @@
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+}
+
+rootProject.name = 'gitversion-gradle'
+
+dependencyResolutionManagement {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://maven.moddinglegacy.com' } // Gradle API
+        mavenCentral()
+        mavenLocal()
+    }
+
+    versionCatalogs.register('libs') {
+        plugin 'licenser',       'net.minecraftforge.licenser'    version '1.2.0'     // https://plugins.gradle.org/plugin/net.minecraftforge.licenser
+        plugin 'gradleutils',    'net.minecraftforge.gradleutils' version '2.6.0'     // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
+        plugin 'javadoc-links',  'io.freefair.javadoc-links'      version '8.14'      // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
+        plugin 'plugin-publish', 'com.gradle.plugin-publish'      version '1.3.1'     // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
+        plugin 'shadow',         'com.gradleup.shadow'            version '9.0.0-rc3' // https://plugins.gradle.org/plugin/com.gradleup.shadow
+
+        //https://repos.moddinglegacy.com/modding-legacy/name/remal/gradle-api/gradle-api/9.0.0/gradle-api-9.0.0.pom
+        //https://repos.moddinglegacy.com/modding-legacy/#/name/remal/gradle-api/gradle-api/9.0.0/gradle-api-9.0.0.pom
+        // Gradle API
+        // TODO [ForgeGradle][FG7][Gradle Api] REMOVE once Gradle publish their own API artifacts
+        // Original:  https://github.com/remal-gradle-api/packages/packages/760197
+        // Mirror:    https://maven.moddinglegacy.com/#browse/browse:maven-public:name%2Fremal%2Fgradle-api%2Fgradle-api%2F8.14.1
+        version 'gradle', '9.0.0'
+        library 'gradle', 'name.remal.gradle-api', 'gradle-api'  versionRef 'gradle'
+        library 'nulls',  'org.jetbrains',         'annotations' version    '26.0.2'
+
+        // GradleUtils
+        // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
+        version 'gradleutils', '3.0.0-alpha.1'
+        library 'gradleutils-plugin', 'net.minecraftforge.gradleutils', 'net.minecraftforge.gradleutils.gradle.plugin' versionRef 'gradleutils'
+        library 'gradleutils-binary', 'net.minecraftforge', 'gradleutils' versionRef 'gradleutils'
+        bundle 'gradleutils', ['gradleutils-plugin', 'gradleutils-binary']
+
+        // Git Version
+        library 'gitver', 'net.minecraftforge', 'gitversion' version '0.6.0-alpha.1'
+
+        // JSON Output
+        library 'gson', 'com.google.code.gson', 'gson' version '2.13.1'
+    }
+}

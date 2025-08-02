@@ -10,8 +10,7 @@ import org.eclipse.jgit.api.Git;
 /**
  * A provider for the commit count of a given tag. This is done in GitVersion in
  * {@link GitVersionImpl#getSubprojectCommitCount(Git, String)} by using
- * {@link GitUtils#countCommits(Git, String, Iterable, Iterable) GitUtils.countCommits(Git, String, Iterable,
- * Iterable)}.
+ * {@link GitUtils#countCommits(Git, String, String, Iterable, Iterable)}.
  */
 @SuppressWarnings("JavadocReference")
 @FunctionalInterface
