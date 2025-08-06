@@ -33,7 +33,7 @@ public non-sealed interface GitVersionInternal extends GitVersion {
         private Builder() { }
 
         @Override
-        public GitVersion.Builder gitDir(File gitDir) {
+        public GitVersion.Builder gitDir(@UnknownNullability File gitDir) {
             this.gitDir = gitDir;
             return this;
         }

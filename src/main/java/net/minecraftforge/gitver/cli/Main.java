@@ -25,6 +25,7 @@ public final class Main {
             "Displays this help message and exits")
             .forHelp();
 
+        // strict mode
         var disableStrict0 = parser.accepts("disable-strict",
             """
             Disables strict mode, allowing GitVersion to continue even if an error occurs.
@@ -55,6 +56,32 @@ public final class Main {
             """
             The project directory to use. (default: .)""")
             .withOptionalArg().ofType(File.class).defaultsTo(new File("."));
+
+        var changelogO = parser.accepts("changelog",
+            """
+            Use to generate a changelog for the repository.""");
+
+        var changelogStartO = parser.accepts("start",
+            """
+            The commit to start from when generating the changelog.""")
+            .availableIf(changelogO).withRequiredArg().ofType(String.class);
+
+        var changelogUrlO = parser.accepts("url",
+            """
+            The URL to use when generating the changelog.
+            If left unspecified, will attempt to automatically get the URL from the repository.""")
+            .availableIf(changelogO).withRequiredArg().ofType(String.class);
+
+        var changelogPlainTextO = parser.accepts("plain-text",
+            """
+            If the generated changelog should be in plain text instead of Markdown.""")
+            .availableIf(changelogO);
+
+        var jsonO = parser.accepts("json",
+            """
+            Use to output the Git Version info as JSON.
+            Used by the Git Version Gradle plugin.""")
+            .availableUnless(changelogO);
         //@formatter:on
 
         var options = parser.parse(args);
@@ -65,10 +92,10 @@ public final class Main {
         }
 
         var strict = !options.has(disableStrict0);
-        var configFile = options.valueOf(configFile0);
+        var configFile = options.valueOfOptional(configFile0).orElse(null);
         var projectDir = options.valueOf(projectDir0);
-        var rootDir = options.valueOf(rootDir0);
-        var gitDir = options.valueOf(gitDir0);
+        var rootDir = options.valueOfOptional(rootDir0).orElse(null);
+        var gitDir = options.valueOfOptional(gitDir0).orElse(null);
         try (var version = GitVersion
             .builder()
             .gitDir(gitDir)
@@ -78,7 +105,17 @@ public final class Main {
             .strict(strict)
             .build()
         ) {
-            System.out.print(version.getTagOffset());
+            if (options.has(changelogO)) {
+                System.out.println(version.generateChangelog(
+                    options.valueOfOptional(changelogStartO).orElse(null),
+                    options.valueOfOptional(changelogUrlO).orElse(null),
+                    options.has(changelogPlainTextO)
+                ));
+            } else if (options.has(jsonO)) {
+                System.out.println(version.toJson());
+            } else {
+                System.out.print(version.getTagOffset());
+            }
         }
     }
 

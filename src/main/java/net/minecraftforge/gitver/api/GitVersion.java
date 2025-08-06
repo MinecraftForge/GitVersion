@@ -48,7 +48,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
          * @param gitDir The git directory
          * @return This builder
          */
-        Builder gitDir(File gitDir);
+        Builder gitDir(@UnknownNullability File gitDir);
 
         /**
          * Sets the root directory for the GitVersion instance.

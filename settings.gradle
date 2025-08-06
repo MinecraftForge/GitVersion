@@ -4,6 +4,8 @@ plugins {
 
 rootProject.name = 'gitversion'
 
+includeBuild 'gradle-plugin'
+
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
