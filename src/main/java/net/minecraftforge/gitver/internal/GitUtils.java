@@ -39,9 +39,7 @@ import java.util.Set;
  * This is used heavily by, and in conjunction with, GitVersion. It holds the majority of operations done on the Git
  * repository.
  */
-public interface GitUtils {
-    List<String> DEFAULT_ALLOWED_BRANCHES = List.of("master", "main", "HEAD");
-
+interface GitUtils {
     /**
      * Gets the relative path of a file from a root directory. Uses NIO's {@link Path} to guarantee cross-platform
      * compatibility and reproducible path strings.

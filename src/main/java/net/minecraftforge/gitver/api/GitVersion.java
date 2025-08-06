@@ -4,32 +4,23 @@
  */
 package net.minecraftforge.gitver.api;
 
-import net.minecraftforge.gitver.internal.GitUtils;
 import net.minecraftforge.gitver.internal.GitVersionImpl;
-import net.minecraftforge.gitver.internal.Util;
-import org.eclipse.jgit.lib.Config;
-import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.util.FS;
-import org.eclipse.jgit.util.StringUtils;
-import org.eclipse.jgit.util.SystemReader;
-import org.jetbrains.annotations.ApiStatus;
+import net.minecraftforge.gitver.internal.GitVersionInternal;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
-import org.jetbrains.annotations.UnmodifiableView;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * The heart of the GitVersion library. Information about how GitVersion operates can be found on the
  * <a href="https://github.com/MinecraftForge/GitVersion">path page</a>.
  */
-public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl {
+public sealed interface GitVersion extends AutoCloseable permits GitVersionInternal {
     /* BUILDER */
 
     /**
@@ -39,7 +30,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      * @return A new builder
      */
     static Builder builder() {
-        return new Builder();
+        return GitVersionInternal.builder();
     }
 
     /**
@@ -50,25 +41,14 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      * automatically from the project directory. If the git directory is not set, it will default to {@code .git} in the
      * root directory.
      */
-    final class Builder {
-        private @Nullable File gitDir;
-        private @Nullable File root;
-        private @Nullable File project;
-        private @Nullable GitVersionConfig config;
-        private boolean strict = true;
-
-        private Builder() { }
-
+    sealed interface Builder permits GitVersionInternal.Builder {
         /**
          * Sets the git directory for the GitVersion instance. Ideally, this should be located in the root directory.
          *
          * @param gitDir The git directory
          * @return This builder
          */
-        public Builder gitDir(File gitDir) {
-            this.gitDir = gitDir;
-            return this;
-        }
+        Builder gitDir(@UnknownNullability File gitDir);
 
         /**
          * Sets the root directory for the GitVersion instance.
@@ -76,10 +56,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
          * @param root The root directory
          * @return This builder
          */
-        public Builder root(@UnknownNullability File root) {
-            this.root = root != null ? root.getAbsoluteFile() : null;
-            return this;
-        }
+        Builder root(@UnknownNullability File root);
 
         /**
          * Sets the project directory for the GitVersion instance.
@@ -87,32 +64,19 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
          * @param project The project directory
          * @return This builder
          */
-        public Builder project(@UnknownNullability File project) {
-            this.project = project != null ? project.getAbsoluteFile() : null;
-            return this;
-        }
+        Builder project(@UnknownNullability File project);
 
-        public Builder config(@UnknownNullability File config) {
-            this.config = config != null ? GitVersionConfig.parse(config) : null;
-            return this;
-        }
+        Builder config(@UnknownNullability File config);
 
         /**
          * Sets the config to use for the GitVersion instance.
          *
          * @param config The config
          * @return This builder
-         * @see GitVersionConfig#EMPTY
          */
-        public Builder config(GitVersionConfig config) {
-            this.config = config;
-            return this;
-        }
+        Builder config(GitVersionConfig config);
 
-        public Builder strict(boolean strict) {
-            this.strict = strict;
-            return this;
-        }
+        Builder strict(boolean strict);
 
         /**
          * Builds the GitVersion instance.
@@ -121,31 +85,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
          * @throws IllegalArgumentException If neither the root nor project directory is set
          * @throws GitVersionException      If an error occurs during construction
          */
-        public GitVersion build() {
-            if (this.root == null && this.project == null)
-                throw new IllegalArgumentException("Either the root or project directory must be set");
-
-            if (this.root == null)
-                this.root = findGitRoot(this.project);
-
-            if (this.project == null)
-                this.project = this.root;
-
-            if (this.gitDir == null)
-                this.gitDir = new File(this.root, ".git");
-
-            if (this.config == null)
-                this.config = GitVersionConfig.parse(new File(this.root, ".gitversion"));
-
-            try {
-                return new GitVersionImpl(this.gitDir, this.root, this.project, this.config, this.strict);
-            } catch (GitVersionException e) {
-                if (!this.strict)
-                    return GitVersionImpl.emptyFor(this.project);
-
-                throw e;
-            }
-        }
+        GitVersion build();
     }
 
 
@@ -160,20 +100,13 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      *
      * @return The calculated version
      */
-    default String getTagOffset() {
-        var info = this.getInfo();
-        return "%s.%s".formatted(info.getTag(), info.getOffset());
-    }
+    String getTagOffset();
 
     /** @see #getTagOffsetBranch(Collection) */
-    default String getTagOffsetBranch() {
-        return this.getTagOffsetBranch(GitUtils.DEFAULT_ALLOWED_BRANCHES);
-    }
+    String getTagOffsetBranch();
 
     /** @see #getTagOffsetBranch(Collection) */
-    default String getTagOffsetBranch(@UnknownNullability String... allowedBranches) {
-        return this.getTagOffsetBranch(Arrays.asList(Util.ensure(allowedBranches)));
-    }
+    String getTagOffsetBranch(@UnknownNullability String... allowedBranches);
 
     /**
      * Calculates a version number using {@link #getTagOffset()}. If the current branch is not included in the defined
@@ -188,33 +121,13 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      * @return The calculated version
      * @see #getTagOffset()
      */
-    default String getTagOffsetBranch(@UnknownNullability Collection<String> allowedBranches) {
-        allowedBranches = Util.ensure(allowedBranches);
-        var version = this.getTagOffset();
-        if (allowedBranches.isEmpty()) return version;
-
-        var branch = this.getInfo().getBranch(true);
-        return StringUtils.isEmptyOrNull(branch) || allowedBranches.contains(branch) ? version : "%s-%s".formatted(version, branch);
-    }
+    String getTagOffsetBranch(@UnknownNullability Collection<String> allowedBranches);
 
     /** @see #getMCTagOffsetBranch(String, Collection) */
-    default String getMCTagOffsetBranch(@UnknownNullability String mcVersion) {
-        if (StringUtils.isEmptyOrNull(mcVersion))
-            return this.getTagOffsetBranch();
-
-        var allowedBranches = new ArrayList<>(GitUtils.DEFAULT_ALLOWED_BRANCHES);
-        allowedBranches.add(mcVersion);
-        allowedBranches.add(mcVersion + ".0");
-        allowedBranches.add(mcVersion + ".x");
-        allowedBranches.add(mcVersion.substring(0, mcVersion.lastIndexOf('.')) + ".x");
-
-        return this.getMCTagOffsetBranch(mcVersion, allowedBranches);
-    }
+    String getMCTagOffsetBranch(@UnknownNullability String mcVersion);
 
     /** @see #getMCTagOffsetBranch(String, Collection) */
-    default String getMCTagOffsetBranch(String mcVersion, String... allowedBranches) {
-        return this.getMCTagOffsetBranch(mcVersion, Arrays.asList(allowedBranches));
-    }
+    String getMCTagOffsetBranch(String mcVersion, String... allowedBranches);
 
     /**
      * Calculates a version number using {@link #getTagOffsetBranch(String...)}, additionally prepending the given
@@ -228,9 +141,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      * @param allowedBranches A list of allowed branches
      * @return The calculated version
      */
-    default String getMCTagOffsetBranch(String mcVersion, Collection<String> allowedBranches) {
-        return "%s-%s".formatted(mcVersion, this.getTagOffsetBranch(allowedBranches));
-    }
+    String getMCTagOffsetBranch(String mcVersion, Collection<String> allowedBranches);
 
 
     /* CHANGELOG */
@@ -243,7 +154,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      *
      * @param start     The tag or commit hash to start the changelog from, or {@code null} to start from the current
      * @param url       The URL to the repository, or {@code null} to attempt to use the
-     *                  {@linkplain Info#getUrl() auto-calculated URL} (if available)
+     *                  {@linkplain #getUrl() auto-calculated URL} (if available)
      * @param plainText Whether to generate the changelog in plain text ({@code} false to use Markdown formatting)
      * @return The generated changelog
      * @throws GitVersionException If changelog fails to generate (in {@linkplain Builder#strict(boolean) strict mode})
@@ -278,7 +189,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      * versioning methods in {@link GitVersion} do not suffice.
      */
     @NotNullByDefault
-    sealed interface Info extends Serializable permits GitVersionImpl.Info {
+    sealed interface Info extends Serializable permits GitVersionInternal.Info {
         /** @return The current tag as described by the Git repository using the applied filters */
         String getTag();
 
@@ -305,14 +216,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
          * @param versionFriendly Whether to format the branch to make it version string friendly
          * @return The current branch
          */
-        default String getBranch(boolean versionFriendly) {
-            var branch = this.getBranch();
-            if (!versionFriendly || branch.isBlank()) return branch;
-
-            if (branch.startsWith("pulls/"))
-                branch = "pr" + branch.substring(branch.lastIndexOf('/') + 1);
-            return branch.replaceAll("[\\\\/]", "-");
-        }
+        String getBranch(boolean versionFriendly);
 
         /**
          * @return The long {@code HEAD} commit hash
@@ -333,37 +237,8 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
     /** @return The tag prefix used when filtering tags */
     String getTagPrefix();
 
-    /**
-     * Sets the tag prefix to use when filtering tags.
-     *
-     * @param tagPrefix The tag prefix
-     * @deprecated This method only exists for backwards compatibility in GradleUtils 2.4. Using this is discouraged
-     * since it breaks the contract that the {@linkplain GitVersionConfig config} has the declarations of all the
-     * project's values, including the {@linkplain GitVersionConfig.Project#getTagPrefix() tag prefix} and any
-     * additional {@linkplain GitVersionConfig.Project#getFilters() filters}.
-     */
-    @Deprecated
-    default void setTagPrefix(String tagPrefix) { }
-
     /** @return The filters used when filtering tags (excluding the {@linkplain #getTagPrefix() tag prefix}) */
-    @UnmodifiableView Collection<String> getFilters();
-
-    /** @see #setFilters(String...) */
-    default void setFilters(Collection<String> filters) {
-        this.setFilters(filters.toArray(new String[0]));
-    }
-
-    /**
-     * Sets the filters to use when filtering tags (excluding the {@linkplain #getTagPrefix() tag prefix}).
-     *
-     * @param filters The filters
-     * @deprecated This method only exists for backwards compatibility in GradleUtils 2.4. Using this is discouraged
-     * since it breaks the contract that the {@linkplain GitVersionConfig config} has the declarations of all the
-     * project's values, including the {@linkplain GitVersionConfig.Project#getTagPrefix() tag prefix} and any
-     * additional {@linkplain GitVersionConfig.Project#getFilters() filters}.
-     */
-    @Deprecated
-    default void setFilters(String... filters) { }
+    @Unmodifiable Collection<String> getFilters();
 
 
     /* FILE SYSTEM */
@@ -386,13 +261,9 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      *
      * @return The relative path string
      */
-    default String getProjectPath() {
-        return GitUtils.getRelativePath(this.getRoot(), this.getProject());
-    }
+    String getProjectPath();
 
-    default String getRelativePath(File file) {
-        return this.getRelativePath(false, file);
-    }
+    String getRelativePath(File file);
 
     /**
      * Gets the relative path string of a given file.
@@ -406,55 +277,13 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      * @param file     The file to get the relative path to
      * @return The relative path string
      */
-    default String getRelativePath(boolean fromRoot, File file) {
-        return GitUtils.getRelativePath(fromRoot ? this.getRoot() : this.getProject(), file);
-    }
-
-    /**
-     * Attempts to find the git root from the given directory, using {@linkplain File#getAbsoluteFile() absolute files}
-     * to walk the filesystem.
-     *
-     * @param from The file to find the Git root from
-     * @return The Git root, or the given file if no Git root was found
-     */
-    static File findGitRoot(File from) {
-        for (var dir = from.getAbsoluteFile(); dir != null; dir = dir.getParentFile())
-            if (isGitRoot(dir)) return dir;
-
-        return from;
-    }
-
-    /**
-     * Checks if a given file is a Git root.
-     *
-     * @param dir The directory to check
-     * @return {@code true} if the directory is a Git root
-     */
-    static boolean isGitRoot(File dir) {
-        return new File(dir, ".git").exists();
-    }
-
-    /**
-     * Attempts to get the relative path of the given file from the root of its Git repository. This is exposed
-     * primarily to allow Gradle plugins to get the relative path without needing to declare the path directory
-     * directly, as it can cause issues with task configuration.
-     *
-     * @param file The file to find the relative path to from the root of its Git repository
-     * @return The relative path, or an empty string if the file is not in (or itself is) a Git repository
-     * @see #getRelativePath(boolean, File)
-     * @deprecated Will be removed once GitVersion has its own Gradle plugin and extension, instead of being a part of
-     * <a href="https://github.com/MinecraftForge/GradleUtils">GradleUtils</a>
-     */
-    @Deprecated(forRemoval = true)
-    static String findRelativePath(File file) {
-        return GitUtils.getRelativePath(findGitRoot(file), file);
-    }
+    String getRelativePath(boolean fromRoot, File file);
 
 
     /* SUBPROJECTS */
 
     /** @return The declared subprojects of this path. */
-    @UnmodifiableView Collection<File> getSubprojects();
+    @Unmodifiable Collection<File> getSubprojects();
 
     /**
      * Gets the relative subproject path strings from the declared subprojects. The path strings are relative from the
@@ -485,13 +314,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
      * @return The subproject paths
      * @see #getSubprojects()
      */
-    default Collection<String> getSubprojectPaths(boolean fromRoot) {
-        return this.getSubprojects()
-                   .stream()
-                   .map(dir -> GitUtils.getRelativePath(fromRoot ? this.getRoot() : this.getProject(), dir))
-                   .filter(s -> !s.isBlank())
-                   .collect(Collectors.toCollection(ArrayList::new));
-    }
+    Collection<String> getSubprojectPaths(boolean fromRoot);
 
 
     /* REPOSITORY */
@@ -501,41 +324,20 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionImpl 
     void close();
 
 
-    /* EXPERIMENTAL */
+    /* SERIALIZATION */
 
-    /**
-     * Prevents JGit's {@link SystemReader} from
-     * {@linkplain SystemReader#openSystemConfig(Config, FS) reading the system configuration file}.
-     * <p>This is a <strong>potentially very destructive action</strong> since it replaces the global system reader used
-     * for all JGit operations. It should not be used in production, with the exception of the Gradle environment with
-     * configuration cache. This is because reading the system configuration file requires executing the System's
-     * {@code git} command, which is not allowed when using Gradle configuration cache.</p>
-     * <p>A preferable alternative to using this method, if applicable, is to set the
-     * {@link org.eclipse.jgit.lib.Constants#GIT_CONFIG_NOSYSTEM_KEY <code>"GIT_CONFIG_NOSYSTEM"</code>} environment
-     * variable to {@code "true"}.</p>
-     *
-     * @apiNote Under no circumstances should this method be invoked in a non-Gradle production environment. If you do,
-     * it is at your own risk.
-     */
-    @ApiStatus.Experimental
-    static void disableSystemConfig() {
-        SystemReader.setInstance(new SystemReader.Delegate(SystemReader.getInstance()) {
-            @Override
-            public FileBasedConfig openSystemConfig(Config parent, FS fs) {
-                return new FileBasedConfig(parent, null, fs) {
-                    @Override
-                    public void load() { }
+    String toJson();
 
-                    @Override
-                    public boolean isOutdated() {
-                        return false;
-                    }
-                };
-            }
-        });
-    }
+    interface Output extends Serializable {
+        Info info();
+        @Nullable String url();
 
-    static void restoreSystemReader() {
-        SystemReader.setInstance(null);
+        @Nullable String gitDirPath();
+        @Nullable String rootPath();
+        @Nullable String projectPath();
+
+        @Nullable String tagPrefix();
+        List<String> filters();
+        List<String> subprojectPaths();
     }
 }
