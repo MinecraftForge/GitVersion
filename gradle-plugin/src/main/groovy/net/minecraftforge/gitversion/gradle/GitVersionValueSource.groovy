@@ -28,6 +28,7 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
 @PackageScope abstract class GitVersionValueSource<P extends Parameters> implements ValueSource<String, P> {
     static interface Parameters extends ValueSourceParameters {
         ConfigurableFileCollection getClasspath()
+
         Property<String> getJavaLauncher()
     }
 

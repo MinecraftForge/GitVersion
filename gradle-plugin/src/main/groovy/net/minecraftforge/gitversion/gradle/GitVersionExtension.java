@@ -4,10 +4,6 @@
  */
 package net.minecraftforge.gitversion.gradle;
 
-import net.minecraftforge.gitver.api.GitVersionConfig;
-import net.minecraftforge.gitver.api.GitVersionException;
-import net.minecraftforge.gitver.internal.GitVersionImpl;
-import net.minecraftforge.gitver.internal.GitVersionInternal;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.FileSystemLocationProperty;
@@ -20,7 +16,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 
 // NOTE: See GitVersion
 public sealed interface GitVersionExtension permits GitVersionExtensionInternal {

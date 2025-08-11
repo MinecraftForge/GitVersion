@@ -123,7 +123,7 @@ gradlePlugin {
 
         register('changelog') {
             id = 'net.minecraftforge.changelog'
-            implementationClass = 'net.minecraftforge.gitversion.gradle.ChangelogPlugin'
+            implementationClass = 'net.minecraftforge.gitversion.gradle.changelog.ChangelogPlugin'
             displayName = 'Git Changelog'
             description = 'Creates a changelog text file based on git history using GitVersion.'
             tags.set(['git', 'changelog'])

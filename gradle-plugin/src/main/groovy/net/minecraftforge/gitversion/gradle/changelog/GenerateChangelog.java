@@ -45,8 +45,8 @@ public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> 
 
     /// The absolute path to the current project.
     ///
-    /// Used to configure Git Version without needing to specify the directory itself, since using the directory
-    /// itself can cause implicit dependencies on other tasks that use actually it.
+    /// Used to configure Git Version without needing to specify the directory itself, since using the directory itself
+    /// can cause implicit dependencies on other tasks that use actually it.
     ///
     /// @return A property for the project path
     protected abstract @Input Property<String> getProjectPath();
@@ -58,8 +58,7 @@ public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> 
 
     /// The project URL to use in the changelog.
     ///
-    /// Git Version will automatically attempt to find a URL from the repository's remote details if left
-    /// unspecified.
+    /// Git Version will automatically attempt to find a URL from the repository's remote details if left unspecified.
     ///
     /// @return A property for the project URL
     public abstract @Input @Optional Property<String> getProjectUrl();

@@ -30,7 +30,9 @@ import javax.inject.Inject
     @Inject
     GitVersionExtensionImpl(Project project) {
         this.problems = this.objects.newInstance(GitVersionProblems)
-        this.gitversion = this.objects.property(Output).value(GitVersionValueSource.info(project, this.providers)).tap { disallowChanges(); finalizeValueOnRead() }
+        this.gitversion = this.objects.property(Output)
+                              .value(GitVersionValueSource.info(project, this.providers))
+                              .tap { disallowChanges(); finalizeValueOnRead() }
 
         project.plugins.withId('net.minecraftforge.gradleutils') { extendGradleUtils(project) }
         project.afterEvaluate(this.&finish)
