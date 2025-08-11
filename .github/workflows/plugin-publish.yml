@@ -16,7 +16,7 @@ jobs:
     uses: MinecraftForge/SharedActions/.github/workflows/gradle.yml@v0
     with:
       java: 17
-      gradle_tasks: ':gradle-plugin:check :gradle-plugin:publish' # :gradle-plugin:publishPlugins
+      gradle_tasks: ':gradle-plugin:check :gradle-plugin:publish --stacktrace' # :gradle-plugin:publishPlugins
       artifact_name: 'gitversion-gradle'
       project_path: 'gradle-plugin'
     secrets:
