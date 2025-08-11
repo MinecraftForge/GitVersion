@@ -35,7 +35,7 @@ import javax.inject.Inject
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
         project.plugins.withId('net.minecraftforge.gradleutils') { extendGradleUtils(project) }
-        project.afterEvaluate(this.&finish)
+        project.afterEvaluate { this.finish(it) }
     }
 
     @CompileDynamic

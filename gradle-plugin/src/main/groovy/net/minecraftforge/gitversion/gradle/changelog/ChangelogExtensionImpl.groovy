@@ -31,7 +31,7 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
 
     private @Lazy TaskProvider<GenerateChangelog> task = {
         this.isGenerating.set(true)
-        Util.ensureAfterEvaluate(this.project, this.&finish)
+        Util.ensureAfterEvaluate(this.project) { this.finish(it) }
 
         ChangelogUtils.setupChangelogTask(this.project)
     }()
