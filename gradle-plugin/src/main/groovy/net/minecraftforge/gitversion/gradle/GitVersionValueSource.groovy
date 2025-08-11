@@ -36,11 +36,11 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
 
     protected abstract @Inject ExecOperations getExecOperations()
 
-    static Provider<GitVersionExtensionInternal.Output> info(Project project, ProviderFactory providers) {
+    static Provider<GitVersionExtensionInternal.Output> info(GitVersionPlugin plugin, Project project, ProviderFactory providers) {
         providers.of(Info) { spec ->
             spec.parameters { parameters ->
-                parameters.classpath.from(project.plugins.getPlugin(GitVersionPlugin).getTool(GitVersionTools.GITVERSION))
-                parameters.javaLauncher.set(Util.launcherFor(project.extensions.getByType(JavaPluginExtension), project.extensions.getByType(JavaToolchainService), 17).map { it.executablePath.toString() })
+                parameters.classpath.from(plugin.getTool(GitVersionTools.GITVERSION))
+                parameters.javaLauncher.set(Util.launcherFor(project, 17).map { it.executablePath.toString() })
 
                 parameters.projectPath.set(providers.provider { project.layout.projectDirectory.asFile.absolutePath })
             }

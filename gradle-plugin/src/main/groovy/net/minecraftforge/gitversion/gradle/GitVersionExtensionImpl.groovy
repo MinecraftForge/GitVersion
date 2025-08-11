@@ -8,6 +8,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraftforge.gradleutils.GenerateActionsWorkflow
+import net.minecraftforge.gradleutils.GradleUtilsExtension
 import net.minecraftforge.gradleutils.PomUtils
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
@@ -28,10 +29,10 @@ import javax.inject.Inject
     protected abstract @Inject ProviderFactory getProviders()
 
     @Inject
-    GitVersionExtensionImpl(Project project) {
+    GitVersionExtensionImpl(GitVersionPlugin plugin, Project project) {
         this.problems = this.objects.newInstance(GitVersionProblems)
         this.gitversion = this.objects.property(Output)
-                              .value(GitVersionValueSource.info(project, this.providers))
+                              .value(GitVersionValueSource.info(plugin, project, this.providers))
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
         project.plugins.withId('net.minecraftforge.gradleutils') { extendGradleUtils(project) }

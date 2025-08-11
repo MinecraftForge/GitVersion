@@ -24,6 +24,6 @@ abstract class GitVersionPlugin extends EnhancedPlugin<Project> {
 
     @Override
     public void setup(Project project) {
-        project.getExtensions().create(GitVersionExtension.NAME, GitVersionExtensionImpl.class, project);
+        project.getExtensions().create(GitVersionExtension.NAME, GitVersionExtensionImpl.class, this, project);
     }
 }
