@@ -73,7 +73,7 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
 
     @Override
     Property<Boolean> getPublishAll() {
-        this.publishAll
+        this.publishingAll
     }
 
     @Override

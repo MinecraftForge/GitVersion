@@ -50,7 +50,7 @@ import javax.inject.Inject
 
     @CompileDynamic
     private void extendGradleUtils(Project project) {
-        final pomUtils = project.extensions.getByType(PomUtils)
+        final pomUtils = project.extensions.getByType(GradleUtilsExtension.ForProject).getPom()
         pomUtils.metaClass.addRemoteDetails = { MavenPom pom ->
             final String url
             try {

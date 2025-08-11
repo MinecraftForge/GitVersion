@@ -64,7 +64,7 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
             Closure javaExecSpec = { JavaExecSpec exec ->
                 exec.classpath = parameters.classpath
                 exec.mainClass.set(GitVersionTools.GITVERSION.mainClass)
-                exec.executable = parameters.javaLauncher
+                exec.executable = parameters.javaLauncher.get()
 
                 exec.standardOutput = output
                 exec.errorOutput = Util.toLog(LOGGER.&error)
