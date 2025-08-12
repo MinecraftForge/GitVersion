@@ -5,7 +5,10 @@
 package net.minecraftforge.gitversion.gradle.changelog;
 
 import net.minecraftforge.gitversion.gradle.GitVersionTools;
+import net.minecraftforge.gradleutils.shared.EnhancedPlugin;
+import net.minecraftforge.gradleutils.shared.EnhancedTask;
 import net.minecraftforge.gradleutils.shared.ToolExecBase;
+import org.gradle.api.Project;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -20,7 +23,7 @@ import java.nio.file.Files;
 
 /// Generates a changelog for the project based on the Git history using
 /// <a href="https://github.com/MinecraftForge/GitVersion">Git Version</a>.
-public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> {
+public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> implements EnhancedTask {
     /// The name for the task, used by the [extension][ChangelogExtension] when registering it.
     public static final String NAME = "createChangelog";
 
@@ -36,6 +39,11 @@ public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> 
 
         this.getProjectPath().convention(this.getProviderFactory().provider(() -> this.getProjectLayout().getProjectDirectory().getAsFile().getAbsolutePath()));
         this.getBuildMarkdown().convention(false);
+    }
+
+    @Override
+    public Class<? extends EnhancedPlugin<? super Project>> pluginType() {
+        return ChangelogPlugin.class;
     }
 
     /// The output file for the changelog.

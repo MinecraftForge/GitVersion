@@ -32,7 +32,7 @@ dependencyResolutionManagement {
 
         // GradleUtils
         // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
-        version 'gradleutils', '3.0.0-beta.7'
+        version 'gradleutils', '3.0.0-beta.13'
         library 'gradleutils-plugin', 'net.minecraftforge.gradleutils', 'net.minecraftforge.gradleutils.gradle.plugin' versionRef 'gradleutils'
         library 'gradleutils-binary', 'net.minecraftforge', 'gradleutils' versionRef 'gradleutils'
         bundle 'gradleutils', ['gradleutils-plugin', 'gradleutils-binary']
