@@ -9,9 +9,9 @@ import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraftforge.gradleutils.GenerateActionsWorkflow
 import net.minecraftforge.gradleutils.GradleUtilsExtension
-import net.minecraftforge.gradleutils.PomUtils
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
+import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.ProviderFactory
@@ -26,13 +26,14 @@ import javax.inject.Inject
     private final Property<Output> gitversion
 
     protected abstract @Inject ObjectFactory getObjects()
+    protected abstract @Inject ProjectLayout getLayout()
     protected abstract @Inject ProviderFactory getProviders()
 
     @Inject
     GitVersionExtensionImpl(GitVersionPlugin plugin, Project project) {
         this.problems = this.objects.newInstance(GitVersionProblems)
         this.gitversion = this.objects.property(Output)
-                              .value(GitVersionValueSource.info(plugin, project, this.providers))
+                              .value(GitVersionValueSource.of(plugin, this.layout, this.providers))
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
         project.plugins.withId('net.minecraftforge.gradleutils') { extendGradleUtils(project) }
