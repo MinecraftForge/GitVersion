@@ -16,10 +16,6 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 /// Generates a changelog for the project based on the Git history using
 /// <a href="https://github.com/MinecraftForge/GitVersion">Git Version</a>.
@@ -34,8 +30,7 @@ public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> 
 
         this.setDescription("Generates a changelog for the project based on the Git history using Git Version.");
 
-        //Setup defaults: Using merge-base based text changelog generation of the local project into build/changelog.txt
-        this.getOutputFile().convention(this.getProjectLayout().getBuildDirectory().file("changelog.txt").map(this.getProblems().ensureFileLocation()));
+        this.getOutputFile().convention(this.getDefaultOutputFile("txt"));
 
         this.getProjectPath().convention(this.getProviderFactory().provider(() -> this.getProjectLayout().getProjectDirectory().getAsFile().getAbsolutePath()));
         this.getBuildMarkdown().convention(false);
@@ -84,7 +79,8 @@ public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> 
 
         this.args(
             "--changelog",
-            "--project-dir", this.getProjectPath().get()
+            "--project-dir", this.getProjectPath().get(),
+            "--output", this.getOutputFile().getAsFile().get()
         );
         if (this.getStart().isPresent())
             this.args("--start", this.getStart().get());
@@ -96,20 +92,6 @@ public abstract class GenerateChangelog extends ToolExecBase<ChangelogProblems> 
 
     @Override
     public void exec() {
-        var output = new ByteArrayOutputStream();
-        this.setStandardOutput(output);
-        this.setErrorOutput(Util.toLog(this.getLogger()::error));
-
         super.exec();
-
-        try {
-            Files.writeString(
-                this.getOutputFile().get().getAsFile().toPath(),
-                output.toString(),
-                StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

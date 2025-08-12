@@ -11,6 +11,8 @@ import net.minecraftforge.gitver.api.GitVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 // TODO [GitVersion] Document
 public final class Main {
@@ -57,6 +59,13 @@ public final class Main {
             The project directory to use. (default: .)""")
             .withOptionalArg().ofType(File.class).defaultsTo(new File("."));
 
+        var outputO = parser.accepts("output",
+            """
+            The output file for the requested information.
+            If absent, the standard output will be used instead.
+            Strongly recommended for changelog generation.""")
+            .withRequiredArg().ofType(File.class);
+
         var changelogO = parser.accepts("changelog",
             """
             Use to generate a changelog for the repository.""");
@@ -96,6 +105,7 @@ public final class Main {
         var projectDir = options.valueOf(projectDir0);
         var rootDir = options.valueOfOptional(rootDir0).orElse(null);
         var gitDir = options.valueOfOptional(gitDir0).orElse(null);
+        var output = options.valueOfOptional(outputO).orElse(null);
         try (var version = GitVersion
             .builder()
             .gitDir(gitDir)
@@ -105,17 +115,23 @@ public final class Main {
             .strict(strict)
             .build()
         ) {
+            String result;
             if (options.has(changelogO)) {
-                System.out.println(version.generateChangelog(
+                result = version.generateChangelog(
                     options.valueOfOptional(changelogStartO).orElse(null),
                     options.valueOfOptional(changelogUrlO).orElse(null),
                     options.has(changelogPlainTextO)
-                ));
+                );
             } else if (options.has(jsonO)) {
-                System.out.println(version.toJson());
+                result = version.toJson();
             } else {
-                System.out.print(version.getTagOffset());
+                result = version.getTagOffset();
             }
+
+            if (output != null)
+                Files.writeString(output.toPath(), result, StandardCharsets.UTF_8);
+            else
+                System.out.println(result);
         }
     }
 
