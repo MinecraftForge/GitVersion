@@ -1,4 +1,6 @@
-//import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.github.jengelman.gradle.plugins.shadow.tasks.DependencyFilter
+import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin
 import org.gradle.api.attributes.plugin.GradlePluginApiVersion
 
 plugins {
@@ -11,7 +13,7 @@ plugins {
     alias libs.plugins.gradleutils
     alias libs.plugins.javadoc.links
     alias libs.plugins.plugin.publish
-    //alias libs.plugins.shadow
+    alias libs.plugins.shadow
 }
 
 final projectDisplayName = 'Git Version Gradle Plugin'
@@ -29,13 +31,6 @@ java {
 }
 
 configurations {
-    /*
-    named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) {
-        // Fixes a conflict between Git Version's shadowed SLF4J from JGit and Gradle's own loggers
-        exclude group: 'org.slf4j', module: 'slf4j-api'
-    }
-     */
-
     // Applies the "Gradle Plugin API Version" attribute to configuration
     // This was added in Gradle 7, gives consumers useful errors if they are on an old version
     def applyGradleVersionAttribute = { Configuration configuration ->
@@ -44,35 +39,33 @@ configurations {
         }
     }
 
-    named('apiElements', applyGradleVersionAttribute)
-    named('runtimeElements', applyGradleVersionAttribute)
-    //named('shadowRuntimeElements', applyGradleVersionAttribute)
+    named(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME, applyGradleVersionAttribute)
+    named(ShadowJavaPlugin.SHADOW_RUNTIME_ELEMENTS_CONFIGURATION_NAME, applyGradleVersionAttribute)
 }
 
 dependencies {
+    // Static Analysis
+    compileOnly libs.nulls
+
     // Gradle API
     compileOnly libs.gradle
-    compileOnly libs.nulls
 
     runtimeOnly libs.gradleutils.plugin
     compileOnly libs.gradleutils.binary
 
     // Git Version
-    implementation libs.gitver
     implementation libs.gson
 }
 
-/*
 // Removes local Gradle API from compileOnly. This is a workaround for bugged plugins.
 // TODO [GradleUtils][GradleAPI] Remove this once they are fixed.
 // Publish Plugin: https://github.com/gradle/plugin-portal-requests/issues/260
 // Shadow:         https://github.com/GradleUp/shadow/pull/1422
 afterEvaluate { project ->
     project.configurations.named(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) { compileOnly ->
-        compileOnly.dependencies.remove project.dependencies.gradleApi()
+        compileOnly.dependencies.remove(project.dependencies.gradleApi())
     }
 }
- */
 
 license {
     header = rootProject.file('../LICENSE-header.txt')
@@ -84,13 +77,17 @@ tasks.named('jar', Jar) {
     archiveClassifier = 'thin'
 }
 
-/*
 tasks.named('shadowJar', ShadowJar) {
+    dependencies {
+        exclude { ResolvedDependency dependency ->
+            dependency.moduleName.endsWith('.gradle.plugin')
+        }
+    }
+
     enableAutoRelocation =  true
     archiveClassifier = null
     relocationPrefix = 'net.minecraftforge.gitversion.gradle.shadow'
 }
- */
 
 tasks.withType(GroovyCompile).configureEach {
     groovyOptions.optimizationOptions.indy = true
@@ -132,14 +129,6 @@ gradlePlugin {
         }
     }
 }
-
-/*
-// Allows the thin jar to be published, but won't be considered as the java-runtime variant in the module
-// This forces Gradle to use the fat jar when applying the plugin
-(components.java as AdhocComponentWithVariants).withVariantsFromConfiguration(configurations.runtimeElements) {
-    skip()
-}
- */
 
 publishing {
     publications.register('pluginMaven', MavenPublication) {

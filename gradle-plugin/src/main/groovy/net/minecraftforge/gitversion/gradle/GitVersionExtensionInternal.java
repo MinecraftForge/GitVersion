@@ -48,9 +48,8 @@ non-sealed interface GitVersionExtensionInternal extends GitVersionExtension, Ha
 
     @Override
     default String getTagOffsetBranch(@UnknownNullability Collection<String> allowedBranches) {
-        allowedBranches = net.minecraftforge.gitver.internal.Util.ensure(allowedBranches);
         var version = this.getTagOffset();
-        if (allowedBranches.isEmpty()) return version;
+        if (allowedBranches == null || allowedBranches.isEmpty()) return version;
 
         var branch = this.getInfo().getBranch(true);
         return branch.isBlank() || allowedBranches.contains(branch) ? version : "%s-%s".formatted(version, branch);

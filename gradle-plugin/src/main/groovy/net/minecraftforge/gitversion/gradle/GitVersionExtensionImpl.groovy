@@ -8,7 +8,9 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraftforge.gradleutils.GenerateActionsWorkflow
+import net.minecraftforge.gradleutils.GradleUtilsExtension
 import net.minecraftforge.gradleutils.GradleUtilsExtensionForProject
+import net.minecraftforge.gradleutils.PomUtils
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.file.ProjectLayout
@@ -36,7 +38,6 @@ import javax.inject.Inject
                               .value(GitVersionValueSource.of(plugin, this.layout, this.providers))
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
-        project.plugins.withId('net.minecraftforge.gradleutils') { extendGradleUtils(project) }
         project.afterEvaluate { this.finish(it) }
     }
 
@@ -47,20 +48,6 @@ import javax.inject.Inject
             task.branch.convention(this.providers.provider { this.info.branch })
             task.localPath.convention(this.providers.provider { this.projectPath })
             task.paths.convention(this.providers.provider { this.gitversion.get().subprojectPaths().collect { "!${it}/**".toString() } })
-        }
-    }
-
-    @CompileDynamic
-    private void extendGradleUtils(Project project) {
-        final pomUtils = project.extensions.getByType(GradleUtilsExtensionForProject).getPom()
-        pomUtils.metaClass.addRemoteDetails = { MavenPom pom ->
-            final String url
-            try {
-                //noinspection GroovyVariableNotAssigned
-                return pomUtils.addRemoteDetails(pom, Objects.requireNonNull(this.url))
-            } catch (Exception e) {
-                throw this.problems.pomUtilsGitVersionNoUrl(e)
-            }
         }
     }
 
