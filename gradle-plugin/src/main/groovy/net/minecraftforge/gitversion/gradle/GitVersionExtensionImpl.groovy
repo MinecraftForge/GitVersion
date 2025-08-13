@@ -8,7 +8,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraftforge.gradleutils.GenerateActionsWorkflow
-import net.minecraftforge.gradleutils.GradleUtilsExtension
+import net.minecraftforge.gradleutils.GradleUtilsExtensionForProject
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.file.ProjectLayout
@@ -52,7 +52,7 @@ import javax.inject.Inject
 
     @CompileDynamic
     private void extendGradleUtils(Project project) {
-        final pomUtils = project.extensions.getByType(GradleUtilsExtension.ForProject).getPom()
+        final pomUtils = project.extensions.getByType(GradleUtilsExtensionForProject).getPom()
         pomUtils.metaClass.addRemoteDetails = { MavenPom pom ->
             final String url
             try {
