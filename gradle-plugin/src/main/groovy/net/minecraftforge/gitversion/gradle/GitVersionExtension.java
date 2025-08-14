@@ -18,6 +18,7 @@ import java.io.Serializable;
 import java.util.Collection;
 
 // NOTE: See GitVersion
+@NotNullByDefault
 public sealed interface GitVersionExtension permits GitVersionExtensionInternal {
     String NAME = "gitversion";
 

@@ -7,6 +7,7 @@ package net.minecraftforge.gitversion.gradle
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.Directory
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -35,15 +36,15 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
 
     protected abstract @Inject ExecOperations getExecOperations()
 
-    @PackageScope static Provider<GitVersionExtensionInternal.Output> of(GitVersionPlugin plugin, ProjectLayout layout, ProviderFactory providers) {
+    @PackageScope static Provider<GitVersionExtensionInternal.Output> of(GitVersionPlugin plugin, ProviderFactory providers, File projectDirectory) {
         providers.of(GitVersionValueSource) { spec ->
             spec.parameters { parameters ->
                 parameters.classpath.from(plugin.getTool(GitVersionTools.GITVERSION))
                 // NOTE: We are NOT manually setting the java launcher this time
-                // Gradle 9 requires Java 17 to run, and so does Git Version
-                // We can count on the daemon JVM being 17 or higher without needing the project to apply the 'java' plugin
+                //  Gradle 9 requires Java 17 to run, and so does Git Version
+                //  We can count on the daemon JVM being 17 or higher without needing the project to apply the 'java' plugin
 
-                parameters.projectPath.set(providers.provider { layout.projectDirectory.asFile.absolutePath })
+                parameters.projectPath.set(projectDirectory.absolutePath)
             }
         }.map { Util.fromJson(it, GitVersionExtensionInternal.Output) }
     }

@@ -8,10 +8,11 @@ import net.minecraftforge.gradleutils.shared.EnhancedPlugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.plugins.ExtensionAware;
 
 import javax.inject.Inject;
 
-abstract class GitVersionPlugin extends EnhancedPlugin<Project> {
+abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
     static final String NAME = "gitversion";
     static final String DISPLAY_NAME = "Git Version";
 
@@ -23,7 +24,7 @@ abstract class GitVersionPlugin extends EnhancedPlugin<Project> {
     }
 
     @Override
-    public void setup(Project project) {
-        project.getExtensions().create(GitVersionExtension.NAME, GitVersionExtensionImpl.class, this, project);
+    public void setup(ExtensionAware target) {
+        target.getExtensions().create(GitVersionExtension.NAME, GitVersionExtensionImpl.class, this, target);
     }
 }

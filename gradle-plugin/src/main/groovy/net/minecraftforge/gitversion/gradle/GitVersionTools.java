@@ -5,8 +5,9 @@
 package net.minecraftforge.gitversion.gradle;
 
 import net.minecraftforge.gradleutils.shared.Tool;
+import org.jetbrains.annotations.ApiStatus;
 
-/// The package-private constants used throughout ForgeGradle.
+@ApiStatus.Internal
 public final class GitVersionTools {
     private static final String FORGE_MAVEN = "https://maven.minecraftforge.net/";
 

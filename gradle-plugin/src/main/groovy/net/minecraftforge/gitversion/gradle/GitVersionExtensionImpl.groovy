@@ -8,16 +8,13 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraftforge.gradleutils.GenerateActionsWorkflow
-import net.minecraftforge.gradleutils.GradleUtilsExtension
-import net.minecraftforge.gradleutils.GradleUtilsExtensionForProject
-import net.minecraftforge.gradleutils.PomUtils
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
-import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.ProviderFactory
-import org.gradle.api.publish.maven.MavenPom
+import org.gradle.initialization.layout.BuildLayout
 import org.jetbrains.annotations.Nullable
 
 import javax.inject.Inject
@@ -28,17 +25,19 @@ import javax.inject.Inject
     private final Property<Output> gitversion
 
     protected abstract @Inject ObjectFactory getObjects()
-    protected abstract @Inject ProjectLayout getLayout()
+    protected abstract @Inject BuildLayout getBuildLayout()
     protected abstract @Inject ProviderFactory getProviders()
 
     @Inject
-    GitVersionExtensionImpl(GitVersionPlugin plugin, Project project) {
+    GitVersionExtensionImpl(GitVersionPlugin plugin, ExtensionAware target) {
+        @Nullable final project = target instanceof Project ? target : null
+
         this.problems = this.objects.newInstance(GitVersionProblems)
         this.gitversion = this.objects.property(Output)
-                              .value(GitVersionValueSource.of(plugin, this.layout, this.providers))
+                              .value(GitVersionValueSource.of(plugin, this.providers, project?.layout?.projectDirectory?.asFile ?: this.buildLayout.rootDirectory))
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
-        project.afterEvaluate { this.finish(it) }
+        project?.afterEvaluate { this.finish(it) }
     }
 
     @CompileDynamic
