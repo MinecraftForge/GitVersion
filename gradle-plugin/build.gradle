@@ -50,8 +50,8 @@ dependencies {
     // Gradle API
     compileOnly libs.gradle
 
-    runtimeOnly libs.gradleutils.plugin
-    compileOnly libs.gradleutils.binary
+    //implementation libs.gradleutils.shared
+    compileOnly libs.gradleutils.plugin
 
     // Git Version
     implementation libs.gson
@@ -78,12 +78,6 @@ tasks.named('jar', Jar) {
 }
 
 tasks.named('shadowJar', ShadowJar) {
-    dependencies {
-        exclude { ResolvedDependency dependency ->
-            dependency.moduleName.endsWith('.gradle.plugin')
-        }
-    }
-
     enableAutoRelocation =  true
     archiveClassifier = null
     relocationPrefix = 'net.minecraftforge.gitversion.gradle.shadow'
@@ -152,7 +146,7 @@ publishing {
     }
 
     repositories {
-        maven gradleutils.publishingForgeMaven
+        maven gradleutils.getPublishingForgeMaven(rootProject.file('../repo'))
     }
 }
 

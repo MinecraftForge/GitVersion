@@ -82,12 +82,17 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
     }
 
     @Override
-    Dependency asDependency() {
-        this.asDependency(this.project.dependencies)
-    }
+    TaskProvider<CopyChangelog> copyTo(Project project) {
+        // isGenerating = true and afterEvaluate ensured
+        // See ChangelogUtils#setupChangelogGenerationForPublishingAfterEvaluation
+        project.tasks.register(CopyChangelog.NAME, CopyChangelog) { task ->
+            task.dependsOn(this.task)
 
-    @Override
-    Dependency asDependency(DependencyHandler dependencies) {
-        dependencies.project('path': this.project.path, 'configuration': GenerateChangelog.NAME)
+            var dependency = project.dependencies.project('path': this.project.path, 'configuration': GenerateChangelog.NAME)
+            var configuration = project.configurations.detachedConfiguration(dependency).tap {
+                it.canBeConsumed = false
+            }
+            task.inputFile.fileProvider(project.providers.provider(configuration.&getSingleFile))
+        }
     }
 }

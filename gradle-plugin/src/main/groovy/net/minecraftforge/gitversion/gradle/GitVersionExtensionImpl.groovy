@@ -42,11 +42,13 @@ import javax.inject.Inject
 
     @CompileDynamic
     private void finish(Project project) {
-        project.tasks.withType(GenerateActionsWorkflow).configureEach { task ->
-            task.gitVersionPresent.set(true)
-            task.branch.convention(this.providers.provider { this.info.branch })
-            task.localPath.convention(this.providers.provider { this.projectPath })
-            task.paths.convention(this.providers.provider { this.gitversion.get().subprojectPaths().collect { "!${it}/**".toString() } })
+        project.pluginManager.withPlugin('net.minecraftforge.gradleutils') {
+            project.tasks.withType(GenerateActionsWorkflow).configureEach { task ->
+                task.gitVersionPresent.set(true)
+                task.branch.convention(this.providers.provider { this.info.branch })
+                task.localPath.convention(this.providers.provider { this.projectPath })
+                task.paths.convention(this.providers.provider { this.gitversion.get().subprojectPaths().collect { "!${it}/**".toString() } })
+            }
         }
     }
 

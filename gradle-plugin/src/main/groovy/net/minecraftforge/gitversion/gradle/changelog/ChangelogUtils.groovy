@@ -15,6 +15,7 @@ import org.gradle.api.publish.maven.MavenArtifact
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.jetbrains.annotations.Nullable
 
 /** Utility methods for configuring and working with the changelog tasks. */
 @CompileStatic
@@ -90,7 +91,7 @@ class ChangelogUtils {
      * So for any project that doesn't generate the changelog directly, we must create a
      * {@linkplain CopyChangelog copy task} and new configuration
      */
-    private static TaskProvider<? extends Task> findChangelogTask(Project project) {
+    private static @Nullable TaskProvider<? extends Task> findChangelogTask(Project project) {
         // See if we've already made the task
         if (project.tasks.names.contains(GenerateChangelog.NAME))
             return project.tasks.named(GenerateChangelog.NAME)
@@ -99,14 +100,7 @@ class ChangelogUtils {
             return project.tasks.named(CopyChangelog.NAME)
 
         // See if there is any parent with a changelog configured
-        var parent = findParent(project)
-        if (parent == null) return null
-
-        project.tasks.register(CopyChangelog.NAME, CopyChangelog) { task ->
-            var dependency = parent.asDependency(project.dependencies)
-            var configuration = project.configurations.detachedConfiguration(dependency).tap { it.canBeConsumed = false }
-            task.inputFile.fileProvider project.providers.provider { configuration.singleFile }
-        }
+        findParent(project)?.copyTo(project)
     }
 
     /**
