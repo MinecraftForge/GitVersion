@@ -11,6 +11,7 @@ import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.reflect.HasPublicType;
 import org.gradle.api.reflect.TypeOf;
 import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
@@ -34,7 +35,7 @@ abstract class CopyChangelog extends DefaultTask implements HasPublicType {
     }
 
     @Override
-    public TypeOf<?> getPublicType() {
+    public @Internal TypeOf<?> getPublicType() {
         return TypeOf.typeOf(DefaultTask.class);
     }
 
