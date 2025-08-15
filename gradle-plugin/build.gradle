@@ -153,3 +153,4 @@ publishing {
 }
 
 idea.module { downloadSources = downloadJavadoc = true }
+eclipse.classpath { downloadSources = downloadJavadoc = true }
