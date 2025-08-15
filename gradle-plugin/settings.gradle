@@ -34,9 +34,8 @@ dependencyResolutionManagement {
 
         // GradleUtils
         // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
-        version 'gradleutils', '3.0.0-beta.16'
-        library 'gradleutils-shared', 'net.minecraftforge',             'gradleutils-shared'                           versionRef 'gradleutils'
-        library 'gradleutils-plugin', 'net.minecraftforge.gradleutils', 'net.minecraftforge.gradleutils.gradle.plugin' versionRef 'gradleutils'
+        library 'gradleutils-shared', 'net.minecraftforge',             'gradleutils-shared'                           version '3.0.0-beta.19'
+        library 'gradleutils-plugin', 'net.minecraftforge.gradleutils', 'net.minecraftforge.gradleutils.gradle.plugin' version '3.0.0-beta.17'
 
         // Git Version
         library 'gson',   'com.google.code.gson', 'gson' version '2.13.1'

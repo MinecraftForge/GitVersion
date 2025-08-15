@@ -50,7 +50,7 @@ dependencies {
     // Gradle API
     compileOnly libs.gradle
 
-    //implementation libs.gradleutils.shared
+    implementation libs.gradleutils.shared
     compileOnly libs.gradleutils.plugin
 
     // Git Version
