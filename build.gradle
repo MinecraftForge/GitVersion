@@ -4,8 +4,11 @@ plugins {
     id 'java-library'
     id 'idea'
     id 'maven-publish'
+    alias libs.plugins.javadoc.links
     alias libs.plugins.licenser
     alias libs.plugins.gradleutils
+    id 'net.minecraftforge.gitversion'
+    id 'net.minecraftforge.changelog'
     alias libs.plugins.shadow
 }
 
@@ -107,7 +110,7 @@ publishing {
             name = projectDisplayName
             description = project.description
 
-            gradleutils.pom.setGitHubDetails(pom)
+            gradleutils.pom.addRemoteDetails(pom)
 
             licenses {
                 license gradleutils.pom.licenses.LGPLv2_1

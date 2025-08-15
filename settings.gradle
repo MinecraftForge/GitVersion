@@ -1,10 +1,19 @@
+pluginManagement {
+    includeBuild('gradle-plugin') {
+        name = 'gitversion-gradle'
+    }
+
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.minecraftforge.net' }
+    }
+}
+
 plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 rootProject.name = 'gitversion'
-
-includeBuild 'gradle-plugin'
 
 dependencyResolutionManagement {
     repositories {
@@ -13,10 +22,15 @@ dependencyResolutionManagement {
 
     //@formatter:off
     versionCatalogs.register('libs') {
+        version 'gitversion-gradle', '3.0.0-beta.17'
+
         // Plugins
-        plugin 'licenser',    'net.minecraftforge.licenser'    version '1.2.0'
-        plugin 'gradleutils', 'net.minecraftforge.gradleutils' version '2.6.0'
-        plugin 'shadow',      'com.gradleup.shadow'            version '9.0.0-rc3'
+        plugin 'javadoc-links', 'io.freefair.javadoc-links'      version '8.14'
+        plugin 'licenser',      'net.minecraftforge.licenser'    version '1.2.0'
+        plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.0.0-beta.20'
+        //plugin 'gitversion',    'net.minecraftforge.gitversion'  versionRef 'gitversion-gradle' // https://plugins.gradle.org/plugin/net.minecraftforge.gitversion
+        //plugin 'changelog',     'net.minecraftforge.changelog'   versionRef 'gitversion-gradle' // https://plugins.gradle.org/plugin/net.minecraftforge.changelog
+        plugin 'shadow',        'com.gradleup.shadow'            version '9.0.1'
 
         // Git
         library 'jgit', 'org.eclipse.jgit', 'org.eclipse.jgit' version '7.2.0.202503040940-r'

@@ -10,8 +10,10 @@ plugins {
     id 'eclipse'
     id 'maven-publish'
     alias libs.plugins.licenser
-    alias libs.plugins.gradleutils
     alias libs.plugins.javadoc.links
+    alias libs.plugins.gradleutils
+    alias libs.plugins.gitversion
+    alias libs.plugins.changelog
     alias libs.plugins.plugin.publish
     alias libs.plugins.shadow
 }
@@ -133,7 +135,7 @@ publishing {
             name = projectDisplayName
             description = project.description
 
-            gradleutils.pom.setGitHubDetails pom
+            gradleutils.pom.addRemoteDetails(pom)
 
             licenses {
                 license gradleutils.pom.licenses.LGPLv2_1
