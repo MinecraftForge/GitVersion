@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-public final class Util {
+final class Util {
     /**
      * Hacky method to throw a checked exception without declaring it.
      *

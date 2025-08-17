@@ -22,7 +22,9 @@ import java.util.regex.Pattern;
  * Typically used by GitVersion in
  * {@link net.minecraftforge.gitver.api.GitVersion#generateChangelog(String, String, boolean)}.
  */
-interface GitChangelog {
+final class GitChangelog {
+    private GitChangelog() { }
+
     /**
      * Generates a changelog string that can be written to a file from a given git directory and repository url.
      * <p>
