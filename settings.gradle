@@ -1,9 +1,14 @@
+// NOTE: Dog-fooding our own Gradle plugin
+// Even if it's done outside of pluginManagement, all included builds are considered for plugin substitutions
 pluginManagement {
     includeBuild('gradle-plugin') {
         name = 'gitversion-gradle'
     }
 
+    // Manually declare external repos, since the non-shadowJars of the plugins have dependencies from them
     repositories {
+        //mavenLocal()
+        mavenCentral()
         gradlePluginPortal()
         maven { url = 'https://maven.minecraftforge.net' }
     }
@@ -15,6 +20,8 @@ plugins {
 
 rootProject.name = 'gitversion'
 
+include 'cli'
+
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
@@ -22,15 +29,11 @@ dependencyResolutionManagement {
 
     //@formatter:off
     versionCatalogs.register('libs') {
-        version 'gitversion-gradle', '3.0.0-beta.17'
-
         // Plugins
         plugin 'javadoc-links', 'io.freefair.javadoc-links'      version '8.14'
         plugin 'licenser',      'net.minecraftforge.licenser'    version '1.2.0'
         plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.0.0-beta.20'
-        //plugin 'gitversion',    'net.minecraftforge.gitversion'  versionRef 'gitversion-gradle' // https://plugins.gradle.org/plugin/net.minecraftforge.gitversion
-        //plugin 'changelog',     'net.minecraftforge.changelog'   versionRef 'gitversion-gradle' // https://plugins.gradle.org/plugin/net.minecraftforge.changelog
-        plugin 'shadow',        'com.gradleup.shadow'            version '9.0.1'
+        plugin 'shadow',        'com.gradleup.shadow'            version '9.0.2'
 
         // Git
         library 'jgit', 'org.eclipse.jgit', 'org.eclipse.jgit' version '7.2.0.202503040940-r'

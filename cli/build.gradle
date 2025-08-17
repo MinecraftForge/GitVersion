@@ -1,0 +1,45 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+plugins {
+    id 'java'
+    alias libs.plugins.licenser
+    alias libs.plugins.gradleutils
+    alias libs.plugins.shadow
+}
+
+description = 'The CLI entry point for Git Version.'
+base.archivesName = 'gitversion-cli'
+group = 'net.minecraftforge'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+dependencies {
+    // Static Analysis
+    compileOnly libs.nulls
+
+    // Git Version
+    implementation rootProject
+
+    // CLI
+    implementation libs.jopt
+    runtimeOnly libs.slf4j
+}
+
+license {
+    header = rootProject.file('LICENSE-header.txt')
+    newLine = false
+    exclude '**/*.properties'
+}
+
+tasks.named('shadowJar', ShadowJar) {
+    manifest {
+        inheritFrom(rootProject.tasks.named('jar', Jar).map(Jar.&getManifest).get())
+
+        attributes([
+            'Main-Class': 'net.minecraftforge.gitver.cli.Main'
+        ])
+    }
+
+    archiveClassifier = 'fatjar'
+    minimize()
+}

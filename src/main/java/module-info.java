@@ -8,7 +8,6 @@ module net.minecraftforge.gitver {
     requires org.tomlj;
     requires org.eclipse.jgit;
 
-    requires static joptsimple;
-    requires static org.jetbrains.annotations;
     requires com.google.gson;
+    requires static org.jetbrains.annotations;
 }
