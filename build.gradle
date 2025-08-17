@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id 'java-library'
     id 'idea'
@@ -7,6 +9,7 @@ plugins {
     alias libs.plugins.gradleutils
     id 'net.minecraftforge.gitversion'
     id 'net.minecraftforge.changelog'
+    alias libs.plugins.shadow
 }
 
 final projectDisplayName = 'Git Version'
@@ -23,6 +26,25 @@ java {
     withSourcesJar()
 }
 
+final cli = sourceSets.create('cli')
+
+configurations {
+    dependencyScope('cliShadowImplementation')
+    dependencyScope('cliShadowRuntimeOnly')
+
+    resolvable('cliShadowClasspath') {
+        extendsFrom cliShadowImplementation, cliShadowRuntimeOnly
+    }
+
+    named(cli.implementationConfigurationName) {
+        extendsFrom cliShadowImplementation
+    }
+
+    named(cli.runtimeOnlyConfigurationName) {
+        extendsFrom cliShadowRuntimeOnly
+    }
+}
+
 dependencies {
     // Static Analysis
     compileOnly libs.nulls
@@ -35,6 +57,11 @@ dependencies {
 
     // JSON Output
     implementation libs.gson
+
+    // CLI
+    cliImplementation sourceSets.main.output
+    cliShadowImplementation libs.jopt
+    cliShadowRuntimeOnly libs.slf4j
 }
 
 license {
@@ -56,12 +83,24 @@ tasks.named('jar', Jar) {
     }
 }
 
+tasks.named('shadowJar', ShadowJar) {
+    manifest {
+        attributes([
+            'Main-Class': 'net.minecraftforge.gitver.cli.Main'
+        ])
+    }
+
+    archiveClassifier = 'fatjar'
+    from cli.output
+    configurations = provider { [ project.configurations.getByName('runtimeClasspath'), project.configurations.getByName('cliShadowClasspath') ] }
+
+    minimize()
+}
+
 changelog {
     fromBase()
     publishAll = false
 }
-
-(components.java as AdhocComponentWithVariants).addVariantsFromConfiguration(evaluationDependsOn(':cli').configurations.getByName('shadowRuntimeElements')) { }
 
 publishing {
     repositories {

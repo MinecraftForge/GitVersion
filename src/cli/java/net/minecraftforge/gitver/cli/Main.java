@@ -4,11 +4,8 @@
  */
 package net.minecraftforge.gitver.cli;
 
-import joptsimple.OptionException;
 import joptsimple.OptionParser;
-import joptsimple.OptionSet;
 import net.minecraftforge.gitver.api.GitVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -132,19 +129,6 @@ public final class Main {
                 Files.writeString(output.toPath(), result, StandardCharsets.UTF_8);
             else
                 System.out.println(result);
-        }
-    }
-
-    private static boolean canWrite(File file) {
-        return file.canWrite() || (!file.exists() && file.getParentFile().canWrite());
-    }
-
-    private static @Nullable OptionSet tryParse(OptionParser parser, String[] args) {
-        try {
-            return parser.parse(args);
-        } catch (OptionException e) {
-            e.printStackTrace(System.err);
-            return null;
         }
     }
 }

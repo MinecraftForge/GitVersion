@@ -5,5 +5,4 @@
 module net.minecraftforge.gitver.cli {
     requires joptsimple;
     requires net.minecraftforge.gitver;
-    requires static org.jetbrains.annotations;
 }
