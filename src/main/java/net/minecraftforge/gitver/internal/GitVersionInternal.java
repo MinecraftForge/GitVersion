@@ -86,8 +86,11 @@ public non-sealed interface GitVersionInternal extends GitVersion {
             if (this.gitDir == null)
                 this.gitDir = new File(this.root, ".git");
 
-            if (this.config == null)
-                this.config = GitVersionConfig.parse(new File(this.root, ".gitversion"));
+            if (this.config == null) {
+                var tomlCfg = new File(this.root, ".gitversion.toml");
+                var legacyCfg = new File(this.root, ".gitversion");
+                this.config = GitVersionConfig.parse(tomlCfg.exists() ? tomlCfg : legacyCfg);
+            }
 
             try {
                 if (this.project.compareTo(this.root) > 0 && this.config.getProject(GitUtils.getRelativePath(this.root, this.project)) == null) {
