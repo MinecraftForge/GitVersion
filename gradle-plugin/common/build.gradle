@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'groovy'
+    id 'idea'
+    id 'eclipse'
+    alias libs.plugins.licenser
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+dependencies {
+    // Static Analysis
+    compileOnly libs.nulls
+
+    // GradleUtils
+    implementation libs.gradleutils.shared
+}
+
+license {
+    header = rootProject.file('../LICENSE-header.txt')
+    newLine = false
+    exclude '**/*.properties'
+}

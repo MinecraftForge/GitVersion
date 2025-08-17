@@ -8,8 +8,6 @@ import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -29,7 +27,7 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
     private final Property<Boolean> publishingAll
     private final Property<Boolean> isGenerating
 
-    private @Lazy TaskProvider<GenerateChangelog> task = {
+    private @Lazy TaskProvider<? extends GenerateChangelog> task = {
         this.isGenerating.set(true)
         Util.ensureAfterEvaluate(this.project) { this.finish(it) }
 

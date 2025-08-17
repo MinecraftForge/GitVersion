@@ -1,36 +1,45 @@
 pluginManagement {
     repositories {
+        //mavenLocal()
         gradlePluginPortal()
         maven { url = 'https://maven.minecraftforge.net' }
     }
 }
 
 plugins {
-    // https://plugins.gradle.org/plugin/org.gradle.toolchains.foojay-resolver-convention
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0' // https://plugins.gradle.org/plugin/org.gradle.toolchains.foojay-resolver-convention
+
+    // NOTE: We need to load this into the classpath before GradleUtils for the service to load correctly
+    id 'io.freefair.javadoc-links' version '8.14' apply false // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
+
+    id 'net.minecraftforge.gradleutils' version '3.0.0-beta.20' // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
 }
 
 rootProject.name = 'gitversion-gradle'
+
+include 'common'
+include 'changelog-gradle'
+
+enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
 dependencyResolutionManagement {
     repositories {
         //mavenLocal()
         mavenCentral()
         gradlePluginPortal()
-        maven { url = 'https://maven.minecraftforge.net/' }
+        maven gradleutils.forgeMaven
         maven { url = 'https://maven.moddinglegacy.com' } // Gradle API
     }
 
     versionCatalogs.register('libs') {
         version 'gitversion-gradle', '3.0.0-beta.17'
 
-        plugin 'licenser',       'net.minecraftforge.licenser'    version    '1.2.0'             // https://plugins.gradle.org/plugin/net.minecraftforge.licenser
-        plugin 'javadoc-links',  'io.freefair.javadoc-links'      version    '8.14'              // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
-        plugin 'gradleutils',    'net.minecraftforge.gradleutils' version    '3.0.0-beta.20'     // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
-        plugin 'gitversion',     'net.minecraftforge.gitversion'  versionRef 'gitversion-gradle' // https://plugins.gradle.org/plugin/net.minecraftforge.gitversion
-        plugin 'changelog',      'net.minecraftforge.changelog'   versionRef 'gitversion-gradle' // https://plugins.gradle.org/plugin/net.minecraftforge.changelog
-        plugin 'plugin-publish', 'com.gradle.plugin-publish'      version    '1.3.1'             // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
-        plugin 'shadow',         'com.gradleup.shadow'            version    '9.0.1'             // https://plugins.gradle.org/plugin/com.gradleup.shadow
+        plugin 'licenser',       'net.minecraftforge.licenser'    version '1.2.0'         // https://plugins.gradle.org/plugin/net.minecraftforge.licenser
+        plugin 'javadoc-links',  'io.freefair.javadoc-links'      version '8.14'          // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
+        plugin 'gitversion',     'net.minecraftforge.gitversion'  version '3.0.0-beta.19' // https://plugins.gradle.org/plugin/net.minecraftforge.gitversion
+        plugin 'changelog',      'net.minecraftforge.changelog'   version '3.0.0-beta.19' // https://plugins.gradle.org/plugin/net.minecraftforge.changelog
+        plugin 'plugin-publish', 'com.gradle.plugin-publish'      version '1.3.1'         // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
+        plugin 'shadow',         'com.gradleup.shadow'            version '9.0.2'         // https://plugins.gradle.org/plugin/com.gradleup.shadow
 
         // Static Analysis
         library 'nulls', 'org.jetbrains', 'annotations' version '26.0.2'

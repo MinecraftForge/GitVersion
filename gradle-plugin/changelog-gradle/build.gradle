@@ -1,6 +1,5 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin
-import net.minecraftforge.gradleutils.GradleUtilsExtensionForProject
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.attributes.plugin.GradlePluginApiVersion
 
 plugins {
@@ -18,9 +17,9 @@ plugins {
     alias libs.plugins.shadow
 }
 
-final projectDisplayName = 'Git Version Gradle Plugin'
-description = 'A gradle plugin for using Git Version to manage version numbers.'
-base.archivesName = 'gitversion-gradle'
+final projectDisplayName = 'Git Changelog'
+description = 'Creates a changelog text file based on git history using GitVersion.'
+base.archivesName = 'changelog-gradle'
 group = 'net.minecraftforge'
 version = gitversion.tagOffset
 
@@ -57,13 +56,10 @@ dependencies {
 
     // GradleUtils
     implementation libs.gradleutils.shared
-    compileOnly libs.gradleutils.plugin
-
-    // Git Version
-    implementation libs.gson
 }
 
 // Removes local Gradle API from compileOnly. This is a workaround for bugged plugins.
+// TODO [GradleUtils][GradleAPI] Remove this once they are fixed.
 // Publish Plugin: https://github.com/gradle/plugin-portal-requests/issues/260
 // Shadow:         https://github.com/GradleUp/shadow/pull/1422
 afterEvaluate { project ->
@@ -83,9 +79,9 @@ tasks.named('jar', Jar) {
 }
 
 tasks.named('shadowJar', ShadowJar) {
-    enableAutoRelocation =  true
+    enableAutoRelocation = true
     archiveClassifier = null
-    relocationPrefix = 'net.minecraftforge.gitversion.gradle.shadow'
+    relocationPrefix = 'net.minecraftforge.gitversion.gradle.changelog.shadow'
 }
 
 tasks.withType(GroovyCompile).configureEach {
@@ -107,15 +103,15 @@ changelog {
 }
 
 gradlePlugin {
-    website.set gitversion.url
-    vcsUrl.set gitversion.url + '.git'
+    website = gitversion.url
+    vcsUrl = gitversion.url + '.git'
 
-    plugins.register('gitversion') {
-        id = 'net.minecraftforge.gitversion'
-        implementationClass = 'net.minecraftforge.gitversion.gradle.GitVersionPlugin'
+    plugins.register('changelog') {
+        id = 'net.minecraftforge.changelog'
+        implementationClass = 'net.minecraftforge.gitversion.gradle.changelog.ChangelogPlugin'
         displayName = projectDisplayName
         description = project.description
-        tags.set(['git', 'version'])
+        tags = ['git', 'changelog']
     }
 }
 

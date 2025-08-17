@@ -4,7 +4,6 @@
  */
 package net.minecraftforge.gitversion.gradle.changelog
 
-
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
@@ -32,8 +31,8 @@ class ChangelogUtils {
      * @param project Project to add the task to
      * @return The task responsible for generating the changelog
      */
-    static TaskProvider<GenerateChangelog> setupChangelogTask(Project project) {
-        project.tasks.register(GenerateChangelog.NAME, GenerateChangelog).tap { task ->
+    static TaskProvider<? extends GenerateChangelog> setupChangelogTask(Project project) {
+        project.tasks.register(GenerateChangelog.NAME, GenerateChangelogImpl).tap { task ->
             project.configurations.register(GenerateChangelog.NAME) { it.canBeResolved = false }
             project.artifacts.add(GenerateChangelog.NAME, task)
             project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).configure { it.dependsOn task }
@@ -48,41 +47,41 @@ class ChangelogUtils {
      * @param project The project to add changelog generation publishing to
      */
     static void setupChangelogGenerationOnAllPublishTasks(Project project) {
-        setupChangelogGenerationForAllPublications project
+        setupChangelogGenerationForAllPublications(project)
 
         project.subprojects {
             Util.ensureAfterEvaluate(it) { subproject ->
                 // attempt to get the current subproject's changelog extension
-                var ext = subproject.extensions.findByType(ChangelogExtension)
+                var changelog = subproject.extensions.findByType(ChangelogExtension)
 
                 // find the changelog extension for the highest project that has it, if the subproject doesn't
-                for (var parent = project; ext == null && parent != null; parent = parent.parent == parent ? null : parent.parent) {
-                    ext = parent.extensions.findByType(ChangelogExtension)
+                for (var parent = project; changelog === null && parent !== null; parent = parent.parent == parent ? null : parent.parent) {
+                    changelog = parent.extensions.findByType(ChangelogExtension)
                 }
 
                 // if the project with changelog is publishing all changelogs, set up changelogs for the subproject
-                if (ext != null && ext.publishAll)
-                    setupChangelogGenerationForAllPublications subproject
+                if (changelog?.publishAll)
+                    setupChangelogGenerationForAllPublications(subproject)
             }
         }
     }
 
     private static void setupChangelogGenerationForAllPublications(Project project) {
-        var ext = project.extensions.findByName(PublishingExtension.NAME) as PublishingExtension
-        if (ext === null) return
+        var publishing = project.extensions.findByName(PublishingExtension.NAME) as PublishingExtension
+        if (publishing === null) return
 
         // Get each extension and add the publishing task as a publishing artifact
-        ext.publications.withType(MavenPublication).configureEach { publication ->
-            setupChangelogGenerationForPublishing project, publication
+        publishing.publications.withType(MavenPublication).configureEach { publication ->
+            setupChangelogGenerationForPublishing(project, publication)
         }
     }
 
     private static ChangelogExtensionInternal findParent(Project project) {
-        var ext = project.extensions.findByType(ChangelogExtension) as ChangelogExtensionInternal
-        if (ext?.generating) return ext
+        var changelog = project.extensions.findByType(ChangelogExtension) as ChangelogExtensionInternal
+        if (changelog?.generating) return changelog
 
         var parent = project.parent == project ? null : project.parent
-        return parent == null ? null : findParent(parent)
+        return parent === null ? null : findParent(parent)
     }
 
     /**
@@ -111,7 +110,7 @@ class ChangelogUtils {
      */
     static void setupChangelogGenerationForPublishing(Project project, MavenPublication publication) {
         Util.ensureAfterEvaluate(project) { p ->
-            setupChangelogGenerationForPublishingAfterEvaluation p, publication
+            setupChangelogGenerationForPublishingAfterEvaluation(p, publication)
         }
     }
 
@@ -120,11 +119,11 @@ class ChangelogUtils {
         if (existing) return
 
         // Grab the task
-        var task = findChangelogTask project
+        var task = findChangelogTask(project)
 
         // Add a new changelog artifact and publish it
         publication.artifact(task.get().outputs.files.singleFile) { artifact ->
-            artifact.builtBy task
+            artifact.builtBy(task)
             artifact.classifier = 'changelog'
             artifact.extension = 'txt'
         }
