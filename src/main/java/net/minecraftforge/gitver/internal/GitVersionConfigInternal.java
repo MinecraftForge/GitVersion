@@ -19,11 +19,5 @@ public non-sealed interface GitVersionConfigInternal extends GitVersionConfig {
         }
     }
 
-    non-sealed interface Project extends GitVersionConfig.Project {
-        String getPath();
-
-        String getTagPrefix();
-
-        String[] getFilters();
-    }
+    non-sealed interface Project extends GitVersionConfig.Project { }
 }

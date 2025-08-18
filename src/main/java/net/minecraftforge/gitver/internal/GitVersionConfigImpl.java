@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 @NotNullByDefault
 public record GitVersionConfigImpl(
@@ -69,28 +71,44 @@ public record GitVersionConfigImpl(
 
     public record ProjectImpl(
         @Override String getPath,
+        @Override String[] getIncludePaths,
+        @Override String[] getExcludePaths,
         @Override String getTagPrefix,
         @Override String[] getFilters
     ) implements GitVersionConfigInternal.Project {
-        private static final ProjectImpl DEFAULT_ROOT = new ProjectImpl("", "", new String[0]);
+        private static final ProjectImpl DEFAULT_ROOT = new ProjectImpl("", new String[0], new String[0], "", new String[0]);
         private static final List<GitVersionConfig.Project> DEFAULT_ROOT_LIST = List.of(DEFAULT_ROOT);
+
+        private static String getString(TomlTable table, String key) {
+            return Objects.requireNonNullElse(table.getString(key), "");
+        }
+
+        private static String getString(TomlTable table, String key, Supplier<String> orElse) {
+            return Objects.requireNonNullElseGet(table.getString(key), orElse);
+        }
+
+        private static String[] getStringArray(TomlTable table, String key) {
+            return table.getArrayOrEmpty(key).toList().stream().map(String.class::cast).filter(Predicate.not(String::isBlank)).toArray(String[]::new);
+        }
 
         private static GitVersionConfig.Project parse(TomlParseResult toml) {
             var root = toml.getTableOrEmpty("root");
             if (root.isEmpty()) return DEFAULT_ROOT;
 
-            var tagPrefix = root.contains("tag") ? root.getString("tag") : "";
-            var filters = root.getArrayOrEmpty("filters").toList().stream().map(String.class::cast).filter(s -> !s.isBlank()).toArray(String[]::new);
-            //noinspection DataFlowIssue - TomlTable#getString checked by #contains
-            return new ProjectImpl("", tagPrefix, filters);
+            var includePaths = getStringArray(root, "include");
+            var excludePaths = getStringArray(root, "exclude");
+            var tagPrefix = getString(root, "tag");
+            var filters = getStringArray(root, "filters");
+            return new ProjectImpl("", includePaths, excludePaths, tagPrefix, filters);
         }
 
         private static GitVersionConfig.Project parse(String key, TomlTable table) {
             var project = Objects.requireNonNullElse(table.getString("path"), key);
-            var tagPrefix = table.contains("tag") ? table.getString("tag") : project.replace("/", "-");
-            var filters = table.getArrayOrEmpty("filters").toList().stream().map(String.class::cast).filter(s -> !s.isBlank()).toArray(String[]::new);
-            //noinspection DataFlowIssue - TomlTable#getString checked by #contains
-            return new ProjectImpl(project, tagPrefix, filters);
+            var includePaths = getStringArray(table, "include");
+            var excludePaths = getStringArray(table, "exclude");
+            var tagPrefix = getString(table, "tag", () -> project.replace("/", "-"));
+            var filters = getStringArray(table, "filters");
+            return new ProjectImpl(project, includePaths, excludePaths, tagPrefix, filters);
         }
 
         @Override

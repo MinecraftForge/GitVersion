@@ -280,12 +280,22 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
     String getRelativePath(boolean fromRoot, File file);
 
 
+    /* MANUAL PATHS */
+
+    @Unmodifiable Collection<File> getIncludes();
+
+    @Unmodifiable Collection<File> getExcludes();
+
+
     /* SUBPROJECTS */
 
-    /** @return The declared subprojects of this path. */
+    /**
+     * Gets the subprojects declared relative to this project. Subprojects are ignored from the version number and
+     * changelog generation.
+     *
+     * @return The declared subprojects of this path.
+     */
     @Unmodifiable Collection<File> getSubprojects();
-
-
 
 
     /* REPOSITORY */
@@ -307,6 +317,8 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
         @Nullable String rootPath();
         @Nullable String projectPath();
 
+        List<String> includePaths();
+        List<String> excludePaths();
         @Nullable String tagPrefix();
         List<String> filters();
         List<String> subprojectPaths();

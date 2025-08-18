@@ -21,11 +21,14 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class GitVersionImpl implements GitVersionInternal {
@@ -44,9 +47,19 @@ public final class GitVersionImpl implements GitVersionInternal {
 
     // Config
     // NOTE: These are not calculated lazily because they are used in both info gen and changelog gen
+    private final List<File> includes;
+    private final List<File> excludes;
     private final String tagPrefix;
     private final List<String> filters;
     private final List<File> subprojects;
+
+    // Internal Config
+    private final List<String> includesPaths;
+    private final List<String> excludesPaths;
+    private final List<String> subprojectPaths;
+
+    private final Set<String> allIncludingPaths;
+    private final Set<String> allExcludingPaths;
 
     public GitVersionImpl(File gitDir, File root, File project, GitVersionConfig config, boolean strict) {
         this.strict = strict;
@@ -69,9 +82,20 @@ public final class GitVersionImpl implements GitVersionInternal {
         this.localPath = GitVersionInternal.super.getProjectPath();
         var projectConfig = Objects.requireNonNull(config.getProject(this.localPath));
 
+        this.includesPaths = makePaths(this.includes = parsePaths(Arrays.asList(projectConfig.getIncludePaths())));
+        this.excludesPaths = makePaths(this.excludes = parsePaths(Arrays.asList(projectConfig.getExcludePaths())));
         this.tagPrefix = this.makeTagPrefix(projectConfig.getTagPrefix());
         this.filters = this.makeFilters(projectConfig.getFilters());
-        this.subprojects = this.makeSubprojects(config.getAllProjects());
+        this.subprojectPaths = makePaths(this.subprojects = parsePaths(config.getAllProjects(), GitVersionConfig.Project::getPath));
+
+        var allIncludingPaths = new HashSet<>(includesPaths);
+        if (!this.localPath.isEmpty())
+            allIncludingPaths.add(this.localPath);
+        this.allIncludingPaths = allIncludingPaths;
+
+        var allExcludingPaths = new HashSet<>(excludesPaths);
+        allExcludingPaths.addAll(this.subprojectPaths);
+        this.allExcludingPaths = allExcludingPaths;
     }
 
 
@@ -245,18 +269,16 @@ public final class GitVersionImpl implements GitVersionInternal {
         return this.localPath;
     }
 
-
-    /* SUBPROJECTS */
-
-    @Override
-    public @Unmodifiable Collection<File> getSubprojects() {
-        return this.subprojects;
+    private @Unmodifiable List<File> parsePaths(Collection<String> paths) {
+        return parsePaths(paths, Function.identity());
     }
 
-    private @Unmodifiable List<File> makeSubprojects(Collection<GitVersionConfig.Project> projects) {
-        var ret = new ArrayList<File>(projects.size());
-        for (var project : projects) {
-            var file = new File(this.root, project.getPath()).getAbsoluteFile();
+    private @Unmodifiable <T> List<File> parsePaths(Collection<T> paths, Function<T, String> mapper) {
+        var ret = new ArrayList<File>(paths.size());
+        for (var o : paths) {
+            var p = mapper.apply(o);
+
+            var file = new File(this.root, p).getAbsoluteFile();
             var path = GitUtils.getRelativePath(this.project, file);
             if (path.startsWith("../") || path.equals("..")) continue;
 
@@ -265,34 +287,63 @@ public final class GitVersionImpl implements GitVersionInternal {
         return Collections.unmodifiableList(ret);
     }
 
-    /** The default implementation of {@link CommitCountProvider}, ignoring subprojects */
-    private int getSubprojectCommitCount(Git git, String tag) {
-        var excludePaths = this.getSubprojectPaths();
-        if (this.localPath.isEmpty() && excludePaths.isEmpty()) return -1;
+    private @Unmodifiable List<String> makePaths(Collection<? extends File> files) {
+        var ret = new ArrayList<String>(files.size());
+        for (var file : files) {
+            var path = GitUtils.getRelativePath(this.getRoot(), file);
+            if (path.isBlank()) continue;
 
-        var includePaths = !this.localPath.isEmpty() ? Collections.singleton(this.localPath) : Set.<String>of();
-        try {
-            int count = GitUtils.countCommits(git, tag, this.tagPrefix, includePaths, excludePaths);
-            return Math.max(count, 0);
-        } catch (GitAPIException | IOException e) {
-            throw new GitVersionExceptionInternal("Failed to count commits with the following parameters: Tag %s, Include Paths [%s], Exclude Paths [%s]".formatted(tag, String.join(", ", includePaths), String.join(", ", excludePaths)));
+            ret.add(path);
         }
+        return Collections.unmodifiableList(ret);
     }
 
-    private final Lazy<List<String>> subprojectPathsFromRoot = Lazy.of(() -> this.makeSubprojectPaths(true));
-    private final Lazy<List<String>> subprojectPathsFromProject = Lazy.of(() -> this.makeSubprojectPaths(false));
 
-    private List<String> makeSubprojectPaths(boolean fromRoot) {
-        return this.getSubprojects()
-                   .stream()
-                   .map(dir -> GitUtils.getRelativePath(fromRoot ? this.getRoot() : this.getProject(), dir))
-                   .filter(Predicate.not(String::isBlank))
-                   .toList();
+    /* MANUAL PATHS */
+
+    @Override
+    public @Unmodifiable Collection<File> getIncludes() {
+        return this.includes;
     }
 
     @Override
-    public Collection<String> getSubprojectPaths(boolean fromRoot) {
-        return fromRoot ? this.subprojectPathsFromRoot.get() : this.subprojectPathsFromProject.get();
+    public @Unmodifiable Collection<File> getExcludes() {
+        return this.excludes;
+    }
+
+    @Override
+    public @Unmodifiable Collection<String> getIncludesPaths() {
+        return this.includesPaths;
+    }
+
+    @Override
+    public @Unmodifiable Collection<String> getExcludesPaths() {
+        return this.excludesPaths;
+    }
+
+
+    /* SUBPROJECTS */
+
+    @Override
+    public @Unmodifiable Collection<File> getSubprojects() {
+        return this.subprojects;
+    }
+
+    /** The default implementation of {@link CommitCountProvider}, ignoring subprojects */
+    private int getSubprojectCommitCount(Git git, String tag) {
+        if (this.localPath.isEmpty() && this.allExcludingPaths.isEmpty()) return -1;
+
+        try {
+            int count = GitUtils.countCommits(git, tag, this.tagPrefix, this.allIncludingPaths, this.allExcludingPaths);
+            return Math.max(count, 0);
+        } catch (GitAPIException | IOException e) {
+            throw new GitVersionExceptionInternal("Failed to count commits with the following parameters: Tag %s, Include Paths [%s], Exclude Paths [%s]".formatted(tag, String.join(", ", this.allIncludingPaths), String.join(", ", this.allExcludingPaths)));
+        }
+    }
+
+    @Override
+    public @Unmodifiable Collection<String> getSubprojectPaths() {
+        return this.subprojectPaths;
     }
 
 
@@ -371,13 +422,31 @@ public final class GitVersionImpl implements GitVersionInternal {
             throw new GitVersionExceptionInternal("Cannot get project directory without a project");
         }
 
+        @Override public @Unmodifiable Collection<File> getIncludes() {
+            throw new GitVersionExceptionInternal("Cannot get include paths from an empty repository");
+        }
+
+        @Override public @Unmodifiable Collection<File> getExcludes() {
+            throw new GitVersionExceptionInternal("Cannot get exclude paths from an empty repository");
+        }
+
+        @Override
+        public @Unmodifiable Collection<String> getIncludesPaths() {
+            throw new GitVersionExceptionInternal("Cannot get include paths from an empty repository");
+        }
+
+        @Override
+        public @Unmodifiable Collection<String> getExcludesPaths() {
+            throw new GitVersionExceptionInternal("Cannot get exclude paths from an empty repository");
+        }
+
         @Override
         public @Unmodifiable Collection<File> getSubprojects() {
             throw new GitVersionExceptionInternal("Cannot get subprojects from an empty repository");
         }
 
         @Override
-        public Collection<String> getSubprojectPaths(boolean fromRoot) {
+        public Collection<String> getSubprojectPaths() {
             throw new GitVersionExceptionInternal("Cannot get subprojects from an empty repository");
         }
 

@@ -56,6 +56,10 @@ public sealed interface GitVersionConfig permits GitVersionConfigInternal {
     sealed interface Project permits GitVersionConfigInternal.Project {
         String getPath();
 
+        String[] getIncludePaths();
+
+        String[] getExcludePaths();
+
         String getTagPrefix();
 
         String[] getFilters();

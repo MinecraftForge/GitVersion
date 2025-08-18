@@ -11,6 +11,7 @@ import org.eclipse.jgit.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -215,6 +216,18 @@ public non-sealed interface GitVersionInternal extends GitVersion {
     }
 
 
+    /* MANUAL PATHS */
+
+    @Unmodifiable Collection<String> getIncludesPaths();
+
+    @Unmodifiable Collection<String> getExcludesPaths();
+
+
+    /* SUBPROJECTS */
+
+    @Unmodifiable Collection<String> getSubprojectPaths();
+
+
     /* SERIALIZATION */
 
     default String toJson() {
@@ -229,6 +242,8 @@ public non-sealed interface GitVersionInternal extends GitVersion {
         @Nullable String rootPath,
         @Nullable String projectPath,
 
+        List<String> includePaths,
+        List<String> excludePaths,
         @Nullable String tagPrefix,
         List<String> filters,
         List<String> subprojectPaths
@@ -241,6 +256,8 @@ public non-sealed interface GitVersionInternal extends GitVersion {
             @Nullable File root,
             @Nullable File project,
 
+            @Nullable Collection<String> includePaths,
+            @Nullable Collection<String> excludePaths,
             @Nullable String tagPrefix,
             @Nullable Collection<String> filters,
             @Nullable Collection<String> subprojectPaths
@@ -253,13 +270,15 @@ public non-sealed interface GitVersionInternal extends GitVersion {
                 root != null ? root.getAbsolutePath() : null,
                 project != null ? project.getAbsolutePath() : null,
 
+                includePaths != null ? List.copyOf(includePaths) : List.of(),
+                excludePaths != null ? List.copyOf(excludePaths) : List.of(),
                 tagPrefix,
                 filters != null ? List.copyOf(filters) : List.of(),
                 subprojectPaths != null ? List.copyOf(subprojectPaths) : List.of()
             );
         }
 
-        public Output(GitVersion gitVersion) {
+        public Output(GitVersionInternal gitVersion) {
             this(
                 gitVersion.getInfo(),
                 gitVersion.getUrl(),
@@ -268,6 +287,8 @@ public non-sealed interface GitVersionInternal extends GitVersion {
                 Util.tryOrNull(gitVersion::getRoot),
                 Util.tryOrNull(gitVersion::getProject),
 
+                Util.tryOrNull(gitVersion::getIncludesPaths),
+                Util.tryOrNull(gitVersion::getExcludesPaths),
                 Util.tryOrNull(gitVersion::getTagPrefix),
                 Util.tryOrNull(gitVersion::getFilters),
                 Util.tryOrNull(gitVersion::getSubprojectPaths)
