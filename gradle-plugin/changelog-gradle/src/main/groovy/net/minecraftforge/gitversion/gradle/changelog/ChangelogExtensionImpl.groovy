@@ -16,12 +16,9 @@ import org.gradle.api.tasks.TaskProvider
 
 import javax.inject.Inject
 
-/** The heart of the Changelog plugin. This extension is used to enable and partially configure the changelog generation task. */
 @CompileStatic
 @PackageScope([PackageScopeTarget.CLASS, PackageScopeTarget.FIELDS])
 abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
-    public static final String NAME = 'changelog'
-
     private final Project project
 
     private final Property<Boolean> publishingAll
@@ -45,7 +42,7 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
     }
 
     private void finish(Project project) {
-        if (this.publishAll)
+        if (this.publishAll.getOrElse(false))
             ChangelogUtils.setupChangelogGenerationOnAllPublishTasks(project)
     }
 

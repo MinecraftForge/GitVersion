@@ -9,9 +9,11 @@ import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.FileCollection
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenArtifact
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.TaskOutputs
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.annotations.Nullable
@@ -60,7 +62,7 @@ class ChangelogUtils {
                 }
 
                 // if the project with changelog is publishing all changelogs, set up changelogs for the subproject
-                if (changelog?.publishAll)
+                if (changelog?.publishAll?.getOrElse(false))
                     setupChangelogGenerationForAllPublications(subproject)
             }
         }
@@ -122,7 +124,7 @@ class ChangelogUtils {
         var task = findChangelogTask(project)
 
         // Add a new changelog artifact and publish it
-        publication.artifact(task.get().outputs.files.singleFile) { artifact ->
+        publication.artifact(task.map { it.outputs.files.singleFile }) { artifact ->
             artifact.builtBy(task)
             artifact.classifier = 'changelog'
             artifact.extension = 'txt'

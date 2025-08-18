@@ -12,7 +12,7 @@ plugins {
     id 'net.minecraftforge.gradleutils'
     alias libs.plugins.licenser
     alias libs.plugins.gitversion
-    alias libs.plugins.changelog
+    //alias libs.plugins.changelog
     alias libs.plugins.plugin.publish
     alias libs.plugins.shadow
 }
@@ -97,10 +97,12 @@ tasks.withType(Javadoc).configureEach {
     }
 }
 
+/*
 changelog {
     fromBase()
     publishAll = false
 }
+ */
 
 gradlePlugin {
     website = gitversion.url
@@ -117,7 +119,7 @@ gradlePlugin {
 
 publishing {
     publications.register('pluginMaven', MavenPublication) {
-        changelog.publish(it)
+        //changelog.publish(it)
 
         pom { pom ->
             name = projectDisplayName
