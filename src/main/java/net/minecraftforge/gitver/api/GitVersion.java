@@ -285,36 +285,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
     /** @return The declared subprojects of this path. */
     @Unmodifiable Collection<File> getSubprojects();
 
-    /**
-     * Gets the relative subproject path strings from the declared subprojects. The path strings are relative from the
-     * {@linkplain #getProject() project} directory. Use {@link #getSubprojectPaths(boolean)} to conditionally get the
-     * path strings relative from the {@linkplain #getRoot() root} instead.
-     * <p>
-     * These path strings are calculated using the
-     * {@linkplain java.nio.file.Path#relativize(java.nio.file.Path) relative path} from the
-     * {@linkplain #getRoot() root} to each subproject.
-     *
-     * @return The subproject paths
-     * @see #getSubprojects()
-     * @see #getSubprojectPaths(boolean)
-     */
-    default Collection<String> getSubprojectPaths() {
-        return this.getSubprojectPaths(false);
-    }
 
-    /**
-     * Gets the relative subproject path strings from the declared subprojects. The path strings are relative from
-     * either the {@linkplain #getRoot() root} or {@linkplain #getProject() project} directory, depending on the
-     * {@code fromRoot} boolean parameter.
-     * <p>
-     * These path strings are calculated using the
-     * {@linkplain java.nio.file.Path#relativize(java.nio.file.Path) relative path} from the
-     * {@linkplain #getRoot() root} to each subproject.
-     *
-     * @return The subproject paths
-     * @see #getSubprojects()
-     */
-    Collection<String> getSubprojectPaths(boolean fromRoot);
 
 
     /* REPOSITORY */
