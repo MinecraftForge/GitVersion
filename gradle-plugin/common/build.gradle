@@ -12,6 +12,9 @@ dependencies {
     // Static Analysis
     compileOnly libs.nulls
 
+    // Gradle
+    compileOnly libs.gradle
+
     // GradleUtils
     implementation libs.gradleutils.shared
 }

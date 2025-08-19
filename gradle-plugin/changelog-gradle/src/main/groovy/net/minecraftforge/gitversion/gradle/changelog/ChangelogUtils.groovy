@@ -9,11 +9,10 @@ import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.file.FileCollection
+import org.gradle.api.provider.Property
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenArtifact
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.TaskOutputs
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.annotations.Nullable
@@ -48,22 +47,24 @@ class ChangelogUtils {
      *
      * @param project The project to add changelog generation publishing to
      */
-    static void setupChangelogGenerationOnAllPublishTasks(Project project) {
+    static void setupChangelogGenerationOnAllPublishTasks(Project project, Property<Boolean> includingSubprojects) {
         setupChangelogGenerationForAllPublications(project)
 
-        project.subprojects {
-            Util.ensureAfterEvaluate(it) { subproject ->
-                // attempt to get the current subproject's changelog extension
-                var changelog = subproject.extensions.findByType(ChangelogExtension)
+        if (includingSubprojects.getOrElse(false)) {
+            project.subprojects {
+                Util.ensureAfterEvaluate(it) { subproject ->
+                    // attempt to get the current subproject's changelog extension
+                    @Nullable var changelog = subproject.extensions.findByType(ChangelogExtension)
 
-                // find the changelog extension for the highest project that has it, if the subproject doesn't
-                for (var parent = project; changelog === null && parent !== null; parent = parent.parent == parent ? null : parent.parent) {
-                    changelog = parent.extensions.findByType(ChangelogExtension)
+                    // find the changelog extension for the highest project that has it, if the subproject doesn't
+                    for (var parent = project; changelog === null && parent !== null; parent = parent.parent == parent ? null : parent.parent) {
+                        changelog = parent.extensions.findByType(ChangelogExtension)
+                    }
+
+                    // if the project with changelog is publishing all changelogs, set up changelogs for the subproject
+                    if (changelog?.publishAll?.getOrElse(false))
+                        setupChangelogGenerationForAllPublications(subproject)
                 }
-
-                // if the project with changelog is publishing all changelogs, set up changelogs for the subproject
-                if (changelog?.publishAll?.getOrElse(false))
-                    setupChangelogGenerationForAllPublications(subproject)
             }
         }
     }

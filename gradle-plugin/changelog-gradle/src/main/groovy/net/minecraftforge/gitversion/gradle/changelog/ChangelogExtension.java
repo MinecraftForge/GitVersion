@@ -44,9 +44,17 @@ public sealed interface ChangelogExtension permits ChangelogExtensionInternal {
 
     /// The property that sets if the changelog generation should be enabled for all maven publications in the project.
     ///
-    /// It will also set up publishing for all subprojects as long as that subproject does not have another changelog
+    /// @apiNote To set up publishing for all subprojects,  as long as that subproject does not have another changelog
     /// plugin overriding the propagation.
     ///
     /// @return The property for if the changelog generation is enabled for all maven publications
     Property<Boolean> getPublishAll();
+
+    /// If [publishing all][#getPublishAll()], this property determines if subproject publications should be included.
+    ///
+    /// The changelog from the parent project will be copied to the subproject using a [CopyChangelog] task as long as
+    /// the subproject does not have another changelog plugin overriding the propagation.
+    ///
+    /// @return The property for if the changelog generation for publishing to all should include subprojects
+    Property<Boolean> getIncludeSubprojects();
 }

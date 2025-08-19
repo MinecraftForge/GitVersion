@@ -17,5 +17,5 @@ non-sealed interface ChangelogExtensionInternal extends ChangelogExtension, HasP
 
     boolean isGenerating();
 
-    TaskProvider<CopyChangelog> copyTo(Project project);
+    TaskProvider<? extends CopyChangelog> copyTo(Project project);
 }

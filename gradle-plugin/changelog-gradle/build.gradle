@@ -59,7 +59,6 @@ dependencies {
 }
 
 // Removes local Gradle API from compileOnly. This is a workaround for bugged plugins.
-// TODO [GradleUtils][GradleAPI] Remove this once they are fixed.
 // Publish Plugin: https://github.com/gradle/plugin-portal-requests/issues/260
 // Shadow:         https://github.com/GradleUp/shadow/pull/1422
 afterEvaluate { project ->

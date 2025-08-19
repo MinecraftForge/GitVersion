@@ -6,7 +6,6 @@ package net.minecraftforge.gitversion.gradle.changelog
 
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
-import groovy.transform.PackageScopeTarget
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -17,11 +16,11 @@ import org.gradle.api.tasks.TaskProvider
 import javax.inject.Inject
 
 @CompileStatic
-@PackageScope([PackageScopeTarget.CLASS, PackageScopeTarget.FIELDS])
-abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
+@PackageScope abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
     private final Project project
 
     private final Property<Boolean> publishingAll
+    private final Property<Boolean> includingSubprojects
     private final Property<Boolean> isGenerating
 
     private @Lazy TaskProvider<? extends GenerateChangelog> task = {
@@ -38,12 +37,13 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
         this.project = project
 
         this.publishingAll = this.objects.property(Boolean).convention(false)
+        this.includingSubprojects = this.objects.property(Boolean).convention(false)
         this.isGenerating = this.objects.property(Boolean).convention(false)
     }
 
     private void finish(Project project) {
-        if (this.publishAll.getOrElse(false))
-            ChangelogUtils.setupChangelogGenerationOnAllPublishTasks(project)
+        if (this.publishingAll.getOrElse(false))
+            ChangelogUtils.setupChangelogGenerationOnAllPublishTasks(project, this.includingSubprojects)
     }
 
     @Override
@@ -72,21 +72,24 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
     }
 
     @Override
+    Property<Boolean> getIncludeSubprojects() {
+        this.includingSubprojects
+    }
+
+    @Override
     boolean isGenerating() {
         this.isGenerating.get()
     }
 
     @Override
-    TaskProvider<CopyChangelog> copyTo(Project project) {
+    TaskProvider<? extends CopyChangelog> copyTo(Project project) {
         // isGenerating = true and afterEvaluate ensured
         // See ChangelogUtils#setupChangelogGenerationForPublishingAfterEvaluation
-        project.tasks.register(CopyChangelog.NAME, CopyChangelog) { task ->
+        project.tasks.register(CopyChangelog.NAME, CopyChangelogImpl) { task ->
             task.dependsOn(this.task)
 
             var dependency = project.dependencies.project('path': this.project.path, 'configuration': GenerateChangelog.NAME)
-            var configuration = project.configurations.detachedConfiguration(dependency).tap {
-                it.canBeConsumed = false
-            }
+            var configuration = project.configurations.detachedConfiguration(dependency).tap { canBeConsumed = false }
             task.inputFile.fileProvider(project.providers.provider(configuration.&getSingleFile))
         }
     }
