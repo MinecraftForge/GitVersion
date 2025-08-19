@@ -36,6 +36,10 @@ configurations {
         extendsFrom cliShadowImplementation, cliShadowRuntimeOnly
     }
 
+    named(cli.runtimeClasspathConfigurationName) {
+        extendsFrom runtimeClasspath
+    }
+
     named(cli.implementationConfigurationName) {
         extendsFrom cliShadowImplementation
     }

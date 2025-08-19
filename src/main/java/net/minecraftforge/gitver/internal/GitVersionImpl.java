@@ -82,11 +82,11 @@ public final class GitVersionImpl implements GitVersionInternal {
         this.localPath = GitVersionInternal.super.getProjectPath();
         var projectConfig = Objects.requireNonNull(config.getProject(this.localPath));
 
-        this.includesPaths = makePaths(this.includes = parsePaths(Arrays.asList(projectConfig.getIncludePaths())));
-        this.excludesPaths = makePaths(this.excludes = parsePaths(Arrays.asList(projectConfig.getExcludePaths())));
+        this.includesPaths = makePaths(this.includes = parsePaths(Arrays.asList(projectConfig.getIncludePaths()), false));
+        this.excludesPaths = makePaths(this.excludes = parsePaths(Arrays.asList(projectConfig.getExcludePaths()), true));
         this.tagPrefix = this.makeTagPrefix(projectConfig.getTagPrefix());
         this.filters = this.makeFilters(projectConfig.getFilters());
-        this.subprojectPaths = makePaths(this.subprojects = parsePaths(config.getAllProjects(), GitVersionConfig.Project::getPath));
+        this.subprojectPaths = makePaths(this.subprojects = parsePaths(config.getAllProjects(), GitVersionConfig.Project::getPath, true));
 
         var allIncludingPaths = new HashSet<>(includesPaths);
         if (!this.localPath.isEmpty())
@@ -269,18 +269,21 @@ public final class GitVersionImpl implements GitVersionInternal {
         return this.localPath;
     }
 
-    private @Unmodifiable List<File> parsePaths(Collection<String> paths) {
-        return parsePaths(paths, Function.identity());
+    private @Unmodifiable List<File> parsePaths(Collection<String> paths, boolean removeParents) {
+        return parsePaths(paths, Function.identity(), removeParents);
     }
 
-    private @Unmodifiable <T> List<File> parsePaths(Collection<T> paths, Function<T, String> mapper) {
+    private @Unmodifiable <T> List<File> parsePaths(Collection<T> paths, Function<T, String> mapper, boolean removeParents) {
         var ret = new ArrayList<File>(paths.size());
         for (var o : paths) {
             var p = mapper.apply(o);
 
             var file = new File(this.root, p).getAbsoluteFile();
-            var path = GitUtils.getRelativePath(this.project, file);
-            if (path.startsWith("../") || path.equals("..")) continue;
+
+            if (removeParents) {
+                var path = GitUtils.getRelativePath(this.project, file);
+                if (path.isEmpty() || path.startsWith("../") || path.equals("..") || path.equals(".")) continue;
+            }
 
             ret.add(file);
         }

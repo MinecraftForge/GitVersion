@@ -187,7 +187,9 @@ final class GitUtils {
             log.not(parent);
         // We do not exclude the starting commit itself, so the commit is present in the returned iterable
 
-        boolean hasFilters = Util.forEach(includePaths, log::addPath) || Util.forEach(excludePaths, log::excludePath);
+        boolean hasIncludes = Util.forEach(includePaths, log::addPath);
+        boolean hasExcludes = Util.forEach(excludePaths, log::excludePath);
+        boolean hasFilters = hasIncludes || hasExcludes;
 
         // TODO [GitVersion][JGit] PR in a solution for creating an OR rev filter
         return Util.make((RevWalk) log.call(), walk -> {
