@@ -34,7 +34,7 @@ public final class Main {
         var configFile0 = parser.accepts("config-file",
             """
             The config file to read from.
-            If unspecified, Git Version will attempt to locate this as '.gitversion' in the root directory.
+            If unspecified, Git Version will attempt to locate this as '.gitversion.toml' in the root directory.
             If the file does not exist, the default behavior is assumed and there will be no subprojects.
             Unless manually specified, the containing folder will be the project directory, and read access is required.""")
             .withOptionalArg().ofType(File.class);
