@@ -6,9 +6,8 @@ package net.minecraftforge.gitversion.gradle
 
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
+import net.minecraftforge.gitversion.gradle.common.GitVersionTools
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.Directory
-import org.gradle.api.file.ProjectLayout
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
