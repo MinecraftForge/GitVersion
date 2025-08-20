@@ -106,15 +106,15 @@ changelog {
 }
 
 gradlePlugin {
-    website.set gitversion.url
-    vcsUrl.set gitversion.url + '.git'
+    website = gitversion.url
+    vcsUrl = gitversion.url + '.git'
 
     plugins.register('gitversion') {
         id = 'net.minecraftforge.gitversion'
         implementationClass = 'net.minecraftforge.gitversion.gradle.GitVersionPlugin'
         displayName = projectDisplayName
         description = project.description
-        tags.set(['git', 'version'])
+        tags = ['git', 'version']
     }
 }
 

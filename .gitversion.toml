@@ -1,3 +1,11 @@
-[gradlePlugin]
-path = "gradle-plugin"
+[root]
+exclude = [ "gradle-plugin" ] # old folder name for gitversion-gradle
+
+[gitverGradle]
+path = "gitversion-gradle"
 tag = "gradle"
+
+[changelogGradle]
+path = "gitversion-gradle/changelog-gradle"
+tag = "changelog-gradle"
+include = [ "gitversion-gradle/common" ]

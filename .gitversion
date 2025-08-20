@@ -1,3 +1,0 @@
-[gradlePlugin]
-path = "gradle-plugin"
-tag = "gradle"

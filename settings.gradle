@@ -1,9 +1,7 @@
 // NOTE: Dog-fooding our own Gradle plugin
 // Even if it's done outside of pluginManagement, all included builds are considered for plugin substitutions
 pluginManagement {
-    includeBuild('gradle-plugin') {
-        name = 'gitversion-gradle'
-    }
+    includeBuild 'gitversion-gradle'
 
     // Manually declare external repos, since the non-shadowJars of the plugins have dependencies from them
     repositories {

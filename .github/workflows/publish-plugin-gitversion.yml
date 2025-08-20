@@ -4,9 +4,10 @@ on:
   push:
     branches: [ 'master' ]
     paths:
-      - 'gradle-plugin/**'
-      - '!gradle-plugin/changelog-gradle/**'
+      - 'gitversion-gradle/**'
+      - '!gitversion-gradle/changelog-gradle/**'
       - '!.github/workflows/**'
+      - '!docs/**'
       - '!README.md'
 
 permissions:
@@ -17,9 +18,9 @@ jobs:
     uses: MinecraftForge/SharedActions/.github/workflows/gradle.yml@v0
     with:
       java: 17
-      gradle_tasks: ':gitversion-gradle:check :gitversion-gradle:publish' # :gitversion-gradle:publishPlugins
+      gradle_tasks: ':gitversion-gradle:check :gitversion-gradle:publish :gitversion-gradle:publishPlugins'
       artifact_name: 'gitversion-gradle'
-      project_path: 'gradle-plugin'
+      project_path: 'gitversion-gradle'
     secrets:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       PROMOTE_ARTIFACT_WEBHOOK: ${{ secrets.PROMOTE_ARTIFACT_WEBHOOK }}
