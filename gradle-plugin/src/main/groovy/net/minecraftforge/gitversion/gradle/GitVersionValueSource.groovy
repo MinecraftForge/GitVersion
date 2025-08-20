@@ -8,6 +8,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraftforge.gitversion.gradle.common.GitVersionTools
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.Directory
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
@@ -27,7 +29,7 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
     static interface Parameters extends ValueSourceParameters {
         ConfigurableFileCollection getClasspath()
 
-        Property<String> getProjectPath()
+        DirectoryProperty getProjectPath()
     }
 
     @Inject
@@ -35,7 +37,7 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
 
     protected abstract @Inject ExecOperations getExecOperations()
 
-    @PackageScope static Provider<GitVersionExtensionInternal.Output> of(GitVersionPlugin plugin, ProviderFactory providers, File projectDirectory) {
+    @PackageScope static Provider<GitVersionExtensionInternal.Output> of(GitVersionPlugin plugin, ProviderFactory providers, Directory projectDirectory) {
         providers.of(GitVersionValueSource) { spec ->
             spec.parameters { parameters ->
                 parameters.classpath.from(plugin.getTool(GitVersionTools.GITVERSION))
@@ -43,7 +45,7 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
                 //  Gradle 9 requires Java 17 to run, and so does Git Version
                 //  We can count on the daemon JVM being 17 or higher without needing the project to apply the 'java' plugin
 
-                parameters.projectPath.set(projectDirectory.absolutePath)
+                parameters.projectPath.set(projectDirectory)
             }
         }.map { Util.fromJson(it, GitVersionExtensionInternal.Output) }
     }
@@ -62,7 +64,7 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
 
             exec.args(
                 '--json',
-                '--project-dir', parameters.projectPath.get()
+                '--project-dir', parameters.projectPath.locationOnly.get().asFile
             )
         }
 

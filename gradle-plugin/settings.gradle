@@ -34,8 +34,8 @@ dependencyResolutionManagement {
     versionCatalogs.register('libs') {
         plugin 'licenser',       'net.minecraftforge.licenser'    version '1.2.0'         // https://plugins.gradle.org/plugin/net.minecraftforge.licenser
         plugin 'javadoc-links',  'io.freefair.javadoc-links'      version '8.14'          // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
-        plugin 'gitversion',     'net.minecraftforge.gitversion'  version '3.0.0-beta.22' // https://plugins.gradle.org/plugin/net.minecraftforge.gitversion
-        plugin 'changelog',      'net.minecraftforge.changelog'   version '3.0.0-beta.22' // https://plugins.gradle.org/plugin/net.minecraftforge.changelog
+        plugin 'gitversion',     'net.minecraftforge.gitversion'  version '3.0.0-beta.25' // https://plugins.gradle.org/plugin/net.minecraftforge.gitversion
+        plugin 'changelog',      'net.minecraftforge.changelog'   version '3.0.0-beta.25' // https://plugins.gradle.org/plugin/net.minecraftforge.changelog
         plugin 'plugin-publish', 'com.gradle.plugin-publish'      version '1.3.1'         // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
         plugin 'shadow',         'com.gradleup.shadow'            version '9.0.2'         // https://plugins.gradle.org/plugin/com.gradleup.shadow
 
@@ -51,8 +51,8 @@ dependencyResolutionManagement {
 
         // GradleUtils
         // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
-        library 'gradleutils-shared', 'net.minecraftforge',             'gradleutils-shared'                           version '3.0.0-beta.27'
-        library 'gradleutils-plugin', 'net.minecraftforge.gradleutils', 'net.minecraftforge.gradleutils.gradle.plugin' version '3.0.0-beta.28'
+        library 'gradleutils-shared', 'net.minecraftforge',             'gradleutils-shared'                           version '3.0.0-beta.30'
+        library 'gradleutils-plugin', 'net.minecraftforge.gradleutils', 'net.minecraftforge.gradleutils.gradle.plugin' version '3.0.0-beta.30'
 
         // Git Version
         library 'gson',   'com.google.code.gson', 'gson' version '2.13.1'

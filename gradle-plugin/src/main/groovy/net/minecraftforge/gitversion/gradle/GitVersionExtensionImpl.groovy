@@ -14,7 +14,6 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.ProviderFactory
-import org.gradle.initialization.layout.BuildLayout
 import org.jetbrains.annotations.Nullable
 
 import javax.inject.Inject
@@ -25,19 +24,17 @@ import javax.inject.Inject
     private final Property<Output> gitversion
 
     protected abstract @Inject ObjectFactory getObjects()
-    protected abstract @Inject BuildLayout getBuildLayout()
     protected abstract @Inject ProviderFactory getProviders()
 
     @Inject
-    GitVersionExtensionImpl(GitVersionPlugin plugin, ExtensionAware target) {
-        @Nullable final project = target instanceof Project ? target : null
-
+    GitVersionExtensionImpl(GitVersionPlugin plugin, ExtensionAware target, Directory projectDirectory) {
         this.problems = this.objects.newInstance(GitVersionProblems)
         this.gitversion = this.objects.property(Output)
-                              .value(GitVersionValueSource.of(plugin, this.providers, project?.layout?.projectDirectory?.asFile ?: this.buildLayout.rootDirectory))
+                              .value(GitVersionValueSource.of(plugin, this.providers, projectDirectory))
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
-        project?.afterEvaluate { this.finish(it) }
+        if (target instanceof Project)
+            target.afterEvaluate { this.finish(it) }
     }
 
     @CompileDynamic

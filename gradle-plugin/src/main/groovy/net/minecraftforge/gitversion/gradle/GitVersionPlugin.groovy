@@ -31,7 +31,8 @@ abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
 
     @Override
     void setup(ExtensionAware target) {
-        if (target instanceof Project && target.layout.projectDirectory.asFile == this.buildLayout.rootDirectory.asFile) {
+        // Gradle 9.0.0 removes the ability to move the settings.gradle file, so it is guaranteed to be the root directory
+        if (target instanceof Project && this.projectLayout.projectDirectory.asFile == this.projectLayout.settingsDirectory.asFile) {
             var gitversion = target.gradle.extensions.findByType(GitVersionExtension)
             if (gitversion !== null) {
                 target.extensions.add('gitversion', gitversion)
@@ -39,7 +40,7 @@ abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
             }
         }
 
-        var gitversion = target.extensions.findByType(GitVersionExtension) ?: target.extensions.create(GitVersionExtension.NAME, GitVersionExtensionImpl, this, target)
+        var gitversion = target.extensions.findByType(GitVersionExtension) ?: target.extensions.create(GitVersionExtension.NAME, GitVersionExtensionImpl, this, target, this.workingProjectDirectory().get())
         if (target instanceof Settings) {
             target.gradle.extensions.add(GitVersionExtension.NAME, gitversion)
             target.gradle.beforeProject { Project project ->

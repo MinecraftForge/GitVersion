@@ -263,6 +263,16 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
      */
     String getProjectPath();
 
+    /**
+     * Gets the relative path string of a given file.
+     * <p>
+     * This path string is calculated using the
+     * {@linkplain java.nio.file.Path#relativize(java.nio.file.Path) relative path} from either the
+     * {@linkplain #getProject() path}.
+     *
+     * @param file The file to get the relative path to
+     * @return The relative path string
+     */
     String getRelativePath(File file);
 
     /**
