@@ -8,4 +8,4 @@ tag = "gradle"
 [changelogGradle]
 path = "gitversion-gradle/changelog-gradle"
 tag = "changelog-gradle"
-include = [ "gitversion-gradle/common" ]
+include = [ "gitversion-gradle/common", "gitversion-gradle/settings.gradle" ]

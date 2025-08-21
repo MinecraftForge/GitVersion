@@ -3,6 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id 'java-library'
     id 'idea'
+    id 'eclipse'
     id 'maven-publish'
     alias libs.plugins.javadoc.links
     alias libs.plugins.licenser
@@ -135,3 +136,4 @@ publishing {
 }
 
 idea.module { downloadSources = downloadJavadoc = true }
+eclipse.classpath { downloadSources = downloadJavadoc = true }
