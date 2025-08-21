@@ -115,6 +115,7 @@ publishing {
         from components.java
 
         changelog.publish(it)
+        gradleutils.promote(it)
 
         pom { pom ->
             name = projectDisplayName
