@@ -12,7 +12,7 @@ plugins {
     // NOTE: We need to load this into the classpath before GradleUtils for the service to load correctly
     id 'io.freefair.javadoc-links' version '8.14' apply false // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
 
-    id 'net.minecraftforge.gradleutils' version '3.1.4' // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
+    id 'net.minecraftforge.gradleutils' version '3.2.1' // https://plugins.gradle.org/plugin/net.minecraftforge.gradleutils
 }
 
 rootProject.name = 'gitversion-gradle'
@@ -32,7 +32,7 @@ dependencyResolutionManagement {
     }
 
     versionCatalogs.register('libs') {
-        version 'gradleutils', '3.1.4'
+        version 'gradleutils', '3.2.1'
 
         plugin 'licenser',       'net.minecraftforge.licenser'    version '1.2.0' // https://plugins.gradle.org/plugin/net.minecraftforge.licenser
         plugin 'javadoc-links',  'io.freefair.javadoc-links'      version '8.14'  // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
