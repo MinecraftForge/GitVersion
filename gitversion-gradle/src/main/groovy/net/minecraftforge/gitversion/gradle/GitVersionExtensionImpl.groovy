@@ -10,7 +10,6 @@ import groovy.transform.PackageScope
 import net.minecraftforge.gradleutils.GenerateActionsWorkflow
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Property
@@ -21,21 +20,28 @@ import javax.inject.Inject
 
 @CompileStatic
 @PackageScope abstract class GitVersionExtensionImpl implements GitVersionExtensionInternal {
-    private final GitVersionProblems problems
     private final Property<Output> gitversion
+
+    private boolean hasProject
 
     protected abstract @Inject ObjectFactory getObjects()
     protected abstract @Inject ProviderFactory getProviders()
 
     @Inject
     GitVersionExtensionImpl(GitVersionPlugin plugin, ExtensionAware target, Directory projectDirectory) {
-        this.problems = this.objects.newInstance(GitVersionProblems)
         this.gitversion = this.objects.property(Output)
                               .value(GitVersionValueSource.of(plugin, projectDirectory))
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
         if (target instanceof Project)
-            target.afterEvaluate { this.finish(it) }
+            this.attachTo(target)
+    }
+
+    void attachTo(Project project) {
+        if (this.hasProject) return
+
+        this.hasProject = true
+        project.afterEvaluate { this.finish(it) }
     }
 
     @CompileDynamic
@@ -49,11 +55,12 @@ import javax.inject.Inject
             }
         }
 
-        if (this.problems.test('net.minecraftforge.gitversion.log.version')) {
+        final problems = project.objects.newInstance(GitVersionProblems)
+        if (problems.test('net.minecraftforge.gitversion.log.version')) {
             if (project.version === null) {
                 project.logger.warn('WARNING: Project does not have a version despite applying Git Version Gradle!')
             } else {
-                project.logger.lifecycle('{}', project.version)
+                project.logger.lifecycle('Version: {}', project.version)
             }
         }
     }

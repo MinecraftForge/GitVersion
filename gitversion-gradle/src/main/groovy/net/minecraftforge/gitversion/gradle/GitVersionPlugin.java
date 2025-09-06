@@ -34,6 +34,7 @@ abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
         if (target instanceof Project project && Objects.equals(this.getProjectLayout().getProjectDirectory().getAsFile(), this.getProjectLayout().getSettingsDirectory().getAsFile())) {
             var gitversion = project.getGradle().getExtensions().findByType(GitVersionExtension.class);
             if (gitversion != null) {
+                ((GitVersionExtensionInternal) gitversion).attachTo(project);
                 target.getExtensions().add("gitversion", gitversion);
                 return;
             }
@@ -43,7 +44,12 @@ abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
         if (target instanceof Settings settings) {
             var gradle = settings.getGradle();
             gradle.getExtensions().add(GitVersionExtension.NAME, gitversion);
-            gradle.beforeProject(project -> project.setVersion(gitversion.getTagOffset()));
+            gradle.beforeProject(project -> {
+                project.setVersion(gitversion.getTagOffset());
+                ((GitVersionExtensionInternal) gitversion).attachTo(project);
+            });
+        } else if (target instanceof Project project) {
+            ((GitVersionExtensionInternal) gitversion).attachTo(project);
         }
     }
 }

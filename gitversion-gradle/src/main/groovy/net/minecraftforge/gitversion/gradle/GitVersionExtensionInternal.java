@@ -4,6 +4,7 @@
  */
 package net.minecraftforge.gitversion.gradle;
 
+import org.gradle.api.Project;
 import org.gradle.api.reflect.HasPublicType;
 import org.gradle.api.reflect.TypeOf;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -26,6 +27,8 @@ non-sealed interface GitVersionExtensionInternal extends GitVersionExtension, Ha
     default TypeOf<?> getPublicType() {
         return TypeOf.typeOf(GitVersionExtension.class);
     }
+
+    void attachTo(Project project);
 
 
     /* VERSIONING */
