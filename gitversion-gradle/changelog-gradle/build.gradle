@@ -22,8 +22,6 @@ base.archivesName = 'changelog-gradle'
 group = 'net.minecraftforge'
 version = gitversion.tagOffset
 
-println "Version: $version"
-
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
     withSourcesJar()

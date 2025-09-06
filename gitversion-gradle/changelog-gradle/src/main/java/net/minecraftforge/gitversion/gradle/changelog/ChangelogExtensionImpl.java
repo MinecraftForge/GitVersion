@@ -4,8 +4,6 @@
  */
 package net.minecraftforge.gitversion.gradle.changelog;
 
-import groovy.transform.CompileStatic;
-import groovy.transform.PackageScope;
 import net.minecraftforge.gradleutils.shared.Lazy;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
