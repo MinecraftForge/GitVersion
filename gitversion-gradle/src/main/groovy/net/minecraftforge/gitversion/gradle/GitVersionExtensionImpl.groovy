@@ -10,6 +10,7 @@ import groovy.transform.PackageScope
 import net.minecraftforge.gradleutils.GenerateActionsWorkflow
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Property
@@ -45,6 +46,14 @@ import javax.inject.Inject
                 task.branch.convention(this.providers.provider { this.info.branch })
                 task.localPath.convention(this.providers.provider { this.projectPath })
                 task.paths.convention(this.providers.provider { this.gitversion.get().subprojectPaths().collect { "!${it}/**".toString() } })
+            }
+        }
+
+        if (this.problems.test('net.minecraftforge.gitversion.log.version')) {
+            if (project.version === null) {
+                project.logger.warn('WARNING: Project does not have a version despite applying Git Version Gradle!')
+            } else {
+                project.logger.lifecycle('{}', project.version)
             }
         }
     }
