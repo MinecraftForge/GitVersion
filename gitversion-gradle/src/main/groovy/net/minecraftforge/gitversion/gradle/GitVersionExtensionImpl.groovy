@@ -30,7 +30,7 @@ import javax.inject.Inject
     GitVersionExtensionImpl(GitVersionPlugin plugin, ExtensionAware target, Directory projectDirectory) {
         this.problems = this.objects.newInstance(GitVersionProblems)
         this.gitversion = this.objects.property(Output)
-                              .value(GitVersionValueSource.of(plugin, this.providers, projectDirectory))
+                              .value(GitVersionValueSource.of(plugin, projectDirectory))
                               .tap { disallowChanges(); finalizeValueOnRead() }
 
         if (target instanceof Project)

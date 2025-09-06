@@ -4,7 +4,6 @@ import org.gradle.api.attributes.plugin.GradlePluginApiVersion
 
 plugins {
     id 'java-gradle-plugin'
-    id 'groovy'
     id 'idea'
     id 'eclipse'
     id 'maven-publish'
@@ -81,10 +80,6 @@ tasks.named('shadowJar', ShadowJar) {
     enableAutoRelocation = true
     archiveClassifier = null
     relocationPrefix = 'net.minecraftforge.gitversion.gradle.changelog.shadow'
-}
-
-tasks.withType(GroovyCompile).configureEach {
-    groovyOptions.optimizationOptions.indy = true
 }
 
 tasks.withType(Javadoc).configureEach {

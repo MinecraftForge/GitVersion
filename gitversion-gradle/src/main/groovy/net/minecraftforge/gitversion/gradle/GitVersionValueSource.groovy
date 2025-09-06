@@ -32,15 +32,15 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
         DirectoryProperty getProjectPath()
     }
 
+    protected abstract @Inject ExecOperations getExecOperations()
+
     @Inject
     GitVersionValueSource() {}
 
-    protected abstract @Inject ExecOperations getExecOperations()
-
-    @PackageScope static Provider<GitVersionExtensionInternal.Output> of(GitVersionPlugin plugin, ProviderFactory providers, Directory projectDirectory) {
-        providers.of(GitVersionValueSource) { spec ->
+    @PackageScope static Provider<GitVersionExtensionInternal.Output> of(GitVersionPlugin plugin, Directory projectDirectory) {
+        plugin.getProviders().of(GitVersionValueSource) { spec ->
             spec.parameters { parameters ->
-                parameters.classpath.from(plugin.getTool(GitVersionTools.GITVERSION))
+                parameters.classpath.from(plugin.getTool(GitVersionTools.GITVERSION).classpath)
                 // NOTE: We are NOT manually setting the java launcher this time
                 //  Gradle 9 requires Java 17 to run, and so does Git Version
                 //  We can count on the daemon JVM being 17 or higher without needing the project to apply the 'java' plugin
