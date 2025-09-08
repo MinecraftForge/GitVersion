@@ -21,6 +21,7 @@ abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
 
     static final Logger LOGGER = Logging.getLogger(GitVersionPlugin.class);
 
+    // Used by GitVersionValueSource
     @Override protected abstract @Inject ProviderFactory getProviders();
 
     @Inject
@@ -31,7 +32,7 @@ abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
     @Override
     public void setup(ExtensionAware target) {
         // Gradle 9.0.0 removes the ability to move the settings.gradle file, so it is guaranteed to be the root directory
-        if (target instanceof Project project && Objects.equals(this.getProjectLayout().getProjectDirectory().getAsFile(), this.getProjectLayout().getSettingsDirectory().getAsFile())) {
+        if (target instanceof Project project && Objects.equals(this.getProjectLayout().getProjectDirectory().getAsFile(), this.rootProjectDirectory().getAsFile().get())) {
             var gitversion = project.getGradle().getExtensions().findByType(GitVersionExtension.class);
             if (gitversion != null) {
                 ((GitVersionExtensionInternal) gitversion).attachTo(project);

@@ -6,6 +6,7 @@ package net.minecraftforge.gitversion.gradle.changelog;
 
 import net.minecraftforge.gitversion.gradle.common.GitVersionTools;
 import net.minecraftforge.gradleutils.shared.ToolExecBase;
+import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -21,9 +22,11 @@ abstract class GenerateChangelogImpl extends ToolExecBase<ChangelogProblems> imp
     @Override public abstract @Input @Optional Property<String> getProjectUrl();
     @Override public abstract @Input Property<Boolean> getBuildMarkdown();
 
+    protected abstract @Inject ProjectLayout getProjectLayout();
+
     @Inject
     public GenerateChangelogImpl() {
-        super(ChangelogProblems.class, GitVersionTools.GITVERSION);
+        super(GitVersionTools.GITVERSION);
 
         this.setDescription("Generates a changelog for the project based on the Git history using Git Version.");
 

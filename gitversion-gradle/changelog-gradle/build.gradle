@@ -16,7 +16,7 @@ plugins {
     alias libs.plugins.shadow
 }
 
-final projectDisplayName = 'Git Changelog'
+gradleutils.displayName = 'Git Changelog'
 description = 'Creates a changelog text file based on git history using GitVersion.'
 base.archivesName = 'changelog-gradle'
 group = 'net.minecraftforge'
@@ -33,7 +33,7 @@ configurations {
     // This was added in Gradle 7, gives consumers useful errors if they are on an old version
     def applyGradleVersionAttribute = { Configuration configuration ->
         configuration.attributes {
-            attribute(GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE, objects.named(GradlePluginApiVersion, libs.versions.gradle.get()))
+            attribute(GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE, objects.named(GradlePluginApiVersion, gradleutils.unpack(libs.versions.gradle)))
         }
     }
 
@@ -82,11 +82,6 @@ tasks.named('shadowJar', ShadowJar) {
 
 tasks.withType(Javadoc).configureEach {
     javadocTool = javaToolchains.javadocToolFor { languageVersion = JavaLanguageVersion.of(24) }
-
-    options { StandardJavadocDocletOptions options ->
-        options.windowTitle = projectDisplayName + project.version
-        options.tags 'apiNote:a:API Note:', 'implNote:a:Implementation Note:'
-    }
 }
 
 changelog {
@@ -101,7 +96,7 @@ gradlePlugin {
     plugins.register('changelog') {
         id = 'net.minecraftforge.changelog'
         implementationClass = 'net.minecraftforge.gitversion.gradle.changelog.ChangelogPlugin'
-        displayName = projectDisplayName
+        displayName = gradleutils.displayName
         description = project.description
         tags = ['git', 'changelog']
     }
@@ -113,7 +108,7 @@ publishing {
         gradleutils.promote(it)
 
         pom { pom ->
-            name = projectDisplayName
+            name = gradleutils.displayName
             description = project.description
 
             gradleutils.pom.addRemoteDetails(pom)
@@ -132,6 +127,3 @@ publishing {
         maven gradleutils.getPublishingForgeMaven(rootProject.file('../repo'))
     }
 }
-
-idea.module { downloadSources = downloadJavadoc = true }
-eclipse.classpath { downloadSources = downloadJavadoc = true }

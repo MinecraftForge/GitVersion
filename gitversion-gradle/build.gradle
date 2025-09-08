@@ -17,7 +17,7 @@ plugins {
     alias libs.plugins.shadow
 }
 
-final projectDisplayName = 'Git Version Gradle Plugin'
+gradleutils.displayName = 'Git Version Gradle Plugin'
 description = 'A gradle plugin for using Git Version to manage version numbers.'
 base.archivesName = 'gitversion-gradle'
 group = 'net.minecraftforge'
@@ -29,18 +29,7 @@ java {
     withJavadocJar()
 }
 
-configurations {
-    // Applies the "Gradle Plugin API Version" attribute to configuration
-    // This was added in Gradle 7, gives consumers useful errors if they are on an old version
-    def applyGradleVersionAttribute = { Configuration configuration ->
-        configuration.attributes {
-            attribute(GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE, objects.named(GradlePluginApiVersion, libs.versions.gradle.get()))
-        }
-    }
-
-    named(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME, applyGradleVersionAttribute)
-    named(ShadowJavaPlugin.SHADOW_RUNTIME_ELEMENTS_CONFIGURATION_NAME, applyGradleVersionAttribute)
-}
+gradleutils.pluginDevDefaults(configurations, libs.versions.gradle)
 
 dependencies {
     // Static Analysis
@@ -60,15 +49,6 @@ dependencies {
     implementation libs.gson
 }
 
-// Removes local Gradle API from compileOnly. This is a workaround for bugged plugins.
-// Publish Plugin: https://github.com/gradle/plugin-portal-requests/issues/260
-// Shadow:         https://github.com/GradleUp/shadow/pull/1422
-afterEvaluate { project ->
-    project.configurations.named(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) { compileOnly ->
-        compileOnly.dependencies.remove(project.dependencies.gradleApi())
-    }
-}
-
 license {
     header = rootProject.file('../LICENSE-header.txt')
     newLine = false
@@ -85,17 +65,8 @@ tasks.named('shadowJar', ShadowJar) {
     relocationPrefix = 'net.minecraftforge.gitversion.gradle.shadow'
 }
 
-tasks.withType(GroovyCompile).configureEach {
-    groovyOptions.optimizationOptions.indy = true
-}
-
 tasks.withType(Javadoc).configureEach {
     javadocTool = javaToolchains.javadocToolFor { languageVersion = JavaLanguageVersion.of(24) }
-
-    options { StandardJavadocDocletOptions options ->
-        options.windowTitle = projectDisplayName + project.version
-        options.tags 'apiNote:a:API Note:', 'implNote:a:Implementation Note:'
-    }
 }
 
 changelog {
@@ -110,7 +81,7 @@ gradlePlugin {
     plugins.register('gitversion') {
         id = 'net.minecraftforge.gitversion'
         implementationClass = 'net.minecraftforge.gitversion.gradle.GitVersionPlugin'
-        displayName = projectDisplayName
+        displayName = gradleutils.displayName
         description = project.description
         tags = ['git', 'version']
     }
@@ -122,7 +93,7 @@ publishing {
         gradleutils.promote(it)
 
         pom { pom ->
-            name = projectDisplayName
+            name = gradleutils.displayName
             description = project.description
 
             gradleutils.pom.addRemoteDetails(pom)
@@ -141,6 +112,3 @@ publishing {
         maven gradleutils.getPublishingForgeMaven(rootProject.file('../repo'))
     }
 }
-
-idea.module { downloadSources = downloadJavadoc = true }
-eclipse.classpath { downloadSources = downloadJavadoc = true }

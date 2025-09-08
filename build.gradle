@@ -13,7 +13,7 @@ plugins {
     alias libs.plugins.shadow
 }
 
-final projectDisplayName = 'Git Version'
+gradleutils.displayName = 'Git Version'
 final projectVendor = 'Forge Development LLC'
 description = 'Used by MinecraftForge projects to calculate project versions based on Git history.'
 base.archivesName = 'gitversion'
@@ -76,10 +76,10 @@ license {
 tasks.named('jar', Jar) {
     manifest {
         attributes([
-            'Specification-Title'   : projectDisplayName,
+            'Specification-Title'   : gradleutils.displayName,
             'Specification-Vendor'  : projectVendor,
             'Specification-Version' : gitversion.info.tag,
-            'Implementation-Title'  : projectDisplayName,
+            'Implementation-Title'  : gradleutils.displayName,
             'Implementation-Vendor' : projectVendor,
             'Implementation-Version': project.version
         ], 'net/minecraftforge/gitver/api/')
@@ -102,7 +102,6 @@ tasks.named('shadowJar', ShadowJar) {
 
 changelog {
     fromBase()
-    publishAll = false
 }
 
 publishing {
@@ -117,7 +116,7 @@ publishing {
         gradleutils.promote(it)
 
         pom { pom ->
-            name = projectDisplayName
+            name = gradleutils.displayName
             description = project.description
 
             gradleutils.pom.addRemoteDetails(pom)
@@ -132,6 +131,3 @@ publishing {
         }
     }
 }
-
-idea.module { downloadSources = downloadJavadoc = true }
-eclipse.classpath { downloadSources = downloadJavadoc = true }
