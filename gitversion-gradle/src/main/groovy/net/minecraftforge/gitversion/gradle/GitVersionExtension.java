@@ -8,6 +8,7 @@ import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.FileSystemLocationProperty;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderConvertible;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -35,9 +36,33 @@ public sealed interface GitVersionExtension permits GitVersionExtensionInternal 
 
     String getMCTagOffsetBranch(@UnknownNullability String mcVersion);
 
-    String getMCTagOffsetBranch(String mcVersion, String... allowedBranches);
+    default String getMCTagOffsetBranch(Provider<? extends CharSequence> mcVersion) {
+        return this.getMCTagOffsetBranch(mcVersion.map(Object::toString).getOrNull());
+    }
 
-    String getMCTagOffsetBranch(String mcVersion, Collection<String> allowedBranches);
+    default String getMCTagOffsetBranch(ProviderConvertible<? extends CharSequence> mcVersion) {
+        return this.getMCTagOffsetBranch(mcVersion.asProvider());
+    }
+
+    String getMCTagOffsetBranch(@UnknownNullability String mcVersion, String... allowedBranches);
+
+    default String getMCTagOffsetBranch(Provider<? extends CharSequence> mcVersion, String... allowedBranches) {
+        return this.getMCTagOffsetBranch(mcVersion.map(Object::toString).getOrNull(), allowedBranches);
+    }
+
+    default String getMCTagOffsetBranch(ProviderConvertible<? extends CharSequence> mcVersion, String... allowedBranches) {
+        return this.getMCTagOffsetBranch(mcVersion.asProvider(), allowedBranches);
+    }
+
+    String getMCTagOffsetBranch(@UnknownNullability String mcVersion, Collection<String> allowedBranches);
+
+    default String getMCTagOffsetBranch(Provider<? extends CharSequence> mcVersion, Collection<String> allowedBranches) {
+        return this.getMCTagOffsetBranch(mcVersion.map(Object::toString).getOrNull(), allowedBranches);
+    }
+
+    default String getMCTagOffsetBranch(ProviderConvertible<? extends CharSequence> mcVersion, Collection<String> allowedBranches) {
+        return this.getMCTagOffsetBranch(mcVersion.asProvider(), allowedBranches);
+    }
 
 
     /* INFO */

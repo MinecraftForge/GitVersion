@@ -73,12 +73,15 @@ non-sealed interface GitVersionExtensionInternal extends GitVersionExtension, Ha
     }
 
     @Override
-    default String getMCTagOffsetBranch(String mcVersion, String... allowedBranches) {
+    default String getMCTagOffsetBranch(@UnknownNullability String mcVersion, String... allowedBranches) {
         return this.getMCTagOffsetBranch(mcVersion, Arrays.asList(allowedBranches));
     }
 
     @Override
-    default String getMCTagOffsetBranch(String mcVersion, Collection<String> allowedBranches) {
+    default String getMCTagOffsetBranch(@UnknownNullability String mcVersion, Collection<String> allowedBranches) {
+        if (mcVersion == null || mcVersion.isBlank())
+            return this.getTagOffsetBranch();
+
         return "%s-%s".formatted(mcVersion, this.getTagOffsetBranch(allowedBranches));
     }
 

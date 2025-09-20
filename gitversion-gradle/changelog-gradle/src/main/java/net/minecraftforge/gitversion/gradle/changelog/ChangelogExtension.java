@@ -6,6 +6,7 @@ package net.minecraftforge.gitversion.gradle.changelog;
 
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderConvertible;
 import org.gradle.api.publish.maven.MavenPublication;
 
 /// Configuration for the Changelog plugin.
@@ -36,6 +37,15 @@ public sealed interface ChangelogExtension permits ChangelogExtensionInternal {
     ///
     /// @param marker The start marker for the changelog
     void from(Provider<?> marker);
+
+    /// Sets the changelog start marker to use when generating the changelog. This can be a tag name or a commit SHA.
+    ///
+    /// If `null`, the changelog will start from the last merge base commit.
+    ///
+    /// @param marker The start marker for the changelog
+    default void from(ProviderConvertible<?> marker) {
+        this.from(marker.asProvider());
+    }
 
     /// Sets this project's changelog as an artifact for the given publication.
     ///
