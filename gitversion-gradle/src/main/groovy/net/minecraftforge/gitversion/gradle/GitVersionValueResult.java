@@ -4,4 +4,29 @@
  */
 package net.minecraftforge.gitversion.gradle;
 
-record GitVersionValueResult(GitVersionExtensionInternal.Output output, String errorOutput, Throwable execFailure) { }
+import java.io.Serializable;
+
+@SuppressWarnings("ClassCanBeRecord") // Gradle hates records -- ctor needs to be public
+final class GitVersionValueResult implements Serializable {
+    private final GitVersionExtensionInternal.Output output;
+    private final String errorOutput;
+    private final Throwable execFailure;
+
+    public GitVersionValueResult(GitVersionExtensionInternal.Output output, String errorOutput, Throwable execFailure) {
+        this.output = output;
+        this.errorOutput = errorOutput;
+        this.execFailure = execFailure;
+    }
+
+    public GitVersionExtensionInternal.Output output() {
+        return this.output;
+    }
+
+    public String errorOutput() {
+        return this.errorOutput;
+    }
+
+    public Throwable execFailure() {
+        return this.execFailure;
+    }
+}
