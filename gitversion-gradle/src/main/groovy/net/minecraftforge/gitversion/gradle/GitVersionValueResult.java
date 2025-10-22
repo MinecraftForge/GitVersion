@@ -5,6 +5,7 @@
 package net.minecraftforge.gitversion.gradle;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @SuppressWarnings("ClassCanBeRecord") // Gradle hates records -- ctor needs to be public
 final class GitVersionValueResult implements Serializable {
@@ -28,5 +29,16 @@ final class GitVersionValueResult implements Serializable {
 
     public Throwable execFailure() {
         return this.execFailure;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof GitVersionValueResult that
+            && Objects.equals(this.output, that.output);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(output);
     }
 }
