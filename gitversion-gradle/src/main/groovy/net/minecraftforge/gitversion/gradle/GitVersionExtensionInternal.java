@@ -97,6 +97,8 @@ non-sealed interface GitVersionExtensionInternal extends GitVersionExtension, Ha
         String getCommit,
         String getAbbreviatedId
     ) implements GitVersionExtension.Info {
+        static final Info EMPTY = new Info("0.0", "0", "00000000", "master", "0000000000000000000000", "00000000");
+
         @Override
         public String getBranch(boolean versionFriendly) {
             var branch = this.getBranch();
@@ -149,5 +151,15 @@ non-sealed interface GitVersionExtensionInternal extends GitVersionExtension, Ha
         @Nullable String tagPrefix,
         List<String> filters,
         List<String> subprojectPaths
-    ) implements Serializable { }
+    ) implements Serializable {
+        static final Output EMPTY = new Output(
+            Info.EMPTY,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of());
+    }
 }

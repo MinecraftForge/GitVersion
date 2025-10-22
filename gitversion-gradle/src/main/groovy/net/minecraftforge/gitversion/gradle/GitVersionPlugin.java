@@ -9,6 +9,7 @@ import org.gradle.api.Project;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.provider.ProviderFactory;
 
@@ -22,6 +23,7 @@ abstract class GitVersionPlugin extends EnhancedPlugin<ExtensionAware> {
     static final Logger LOGGER = Logging.getLogger(GitVersionPlugin.class);
 
     // Used by GitVersionValueSource
+    @Override protected abstract @Inject ObjectFactory getObjects();
     @Override protected abstract @Inject ProviderFactory getProviders();
 
     @Inject

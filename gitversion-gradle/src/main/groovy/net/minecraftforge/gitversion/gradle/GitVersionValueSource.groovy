@@ -10,22 +10,16 @@ import net.minecraftforge.gitversion.gradle.common.GitVersionTools
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
-import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.process.ExecOperations
 import org.gradle.process.JavaExecSpec
-import org.gradle.process.ProcessExecutionException
 
 import javax.inject.Inject
 import java.nio.charset.StandardCharsets
 
-import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
-
 @CompileStatic
-@PackageScope abstract class GitVersionValueSource implements ValueSource<String, Parameters> {
+@PackageScope abstract class GitVersionValueSource implements ValueSource<GitVersionValueResult, Parameters> {
     static interface Parameters extends ValueSourceParameters {
         ConfigurableFileCollection getClasspath()
 
@@ -37,8 +31,8 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
     @Inject
     GitVersionValueSource() {}
 
-    @PackageScope static Provider<GitVersionExtensionInternal.Output> of(GitVersionPlugin plugin, Directory projectDirectory) {
-        plugin.getProviders().of(GitVersionValueSource) { spec ->
+    @PackageScope static GitVersionExtensionInternal.Output of(GitVersionProblems problems, GitVersionPlugin plugin, Directory projectDirectory) {
+        var result = plugin.getProviders().of(GitVersionValueSource) { spec ->
             spec.parameters { parameters ->
                 parameters.classpath.from(plugin.getTool(GitVersionTools.GITVERSION).classpath)
                 // NOTE: We are NOT manually setting the java launcher this time
@@ -47,20 +41,30 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
 
                 parameters.projectPath.set(projectDirectory)
             }
-        }.map { Util.fromJson(it, GitVersionExtensionInternal.Output) }
+        }.get()
+
+        if (result.execFailure() !== null)
+            problems.reportGitVersionFailure(result.errorOutput(), result.execFailure())
+
+        return result.output()
     }
 
     @Override
-    String obtain() {
+    GitVersionValueResult obtain() {
         final parameters = this.parameters
-        final output = new ByteArrayOutputStream()
+        final stdOut = new ByteArrayOutputStream()
+        final stdErr = new ByteArrayOutputStream()
+
+        GitVersionExtensionInternal.Output output
+        String errorOutput
+        Throwable execFailure
 
         Closure javaExecSpec = { JavaExecSpec exec ->
             exec.classpath = parameters.classpath
             exec.mainClass.set(GitVersionTools.GITVERSION.mainClass)
 
-            exec.standardOutput = output
-            exec.errorOutput = Util.toLog(LOGGER.&error)
+            exec.standardOutput = stdOut
+            exec.errorOutput = stdErr
 
             exec.args(
                 '--json',
@@ -70,19 +74,29 @@ import static net.minecraftforge.gitversion.gradle.GitVersionPlugin.LOGGER
 
         try {
             this.execOperations.javaexec(javaExecSpec).rethrowFailure().assertNormalExitValue()
-        } catch (ProcessExecutionException e) {
-            output.reset()
+
+            output = Util.fromJson(stdOut.toString(StandardCharsets.UTF_8), GitVersionExtensionInternal.Output)
+            errorOutput = stdErr.toString(StandardCharsets.UTF_8)
+            execFailure = null
+        } catch (Exception e) {
+            stdOut.reset()
 
             try {
                 this.execOperations.javaexec(javaExecSpec.andThen { JavaExecSpec exec ->
                     exec.args('--disable-strict')
+                    exec.errorOutput = new ByteArrayOutputStream()
                 }).rethrowFailure().assertNormalExitValue()
-            } catch (ProcessExecutionException suppressed) {
+
+                output = Util.fromJson(stdOut.toString(StandardCharsets.UTF_8), GitVersionExtensionInternal.Output)
+            } catch (Exception suppressed) {
                 e.addSuppressed(suppressed)
-                throw e
+                output = GitVersionExtensionInternal.Output.EMPTY
             }
+
+            errorOutput = stdErr.toString(StandardCharsets.UTF_8)
+            execFailure = e
         }
 
-        output.toString(StandardCharsets.UTF_8)
+        return new GitVersionValueResult(output, errorOutput, execFailure)
     }
 }
