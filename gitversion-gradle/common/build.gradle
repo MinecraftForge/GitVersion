@@ -4,6 +4,7 @@ plugins {
     id 'idea'
     id 'eclipse'
     alias libs.plugins.licenser
+    alias libs.plugins.gradleutils
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)

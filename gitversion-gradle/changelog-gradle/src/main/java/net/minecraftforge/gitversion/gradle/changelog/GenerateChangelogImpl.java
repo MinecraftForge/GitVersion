@@ -9,6 +9,7 @@ import net.minecraftforge.gradleutils.shared.ToolExecBase;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
@@ -22,6 +23,7 @@ abstract class GenerateChangelogImpl extends ToolExecBase<ChangelogProblems> imp
     @Override public abstract @Input @Optional Property<String> getProjectUrl();
     @Override public abstract @Input Property<Boolean> getBuildMarkdown();
 
+    protected abstract @Inject ProviderFactory getProviders();
     protected abstract @Inject ProjectLayout getProjectLayout();
 
     @Inject
@@ -35,7 +37,7 @@ abstract class GenerateChangelogImpl extends ToolExecBase<ChangelogProblems> imp
         this.getBuildMarkdown().convention(false);
 
         // Internal inputs
-        this.getInputs().property("projectVersion", this.getProviderFactory().provider(this.getProject()::getVersion));
+        this.getInputs().property("projectVersion", this.getProviders().provider(this.getProject()::getVersion));
         this.getInputs().property("projectPath", this.getProjectLayout().getProjectDirectory().getAsFile().getAbsoluteFile());
     }
 

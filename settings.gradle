@@ -5,10 +5,10 @@ pluginManagement {
 
     // Manually declare external repos, since the non-shadowJars of the plugins have dependencies from them
     repositories {
-        //mavenLocal()
-        mavenCentral()
         gradlePluginPortal()
+        mavenCentral()
         maven { url = 'https://maven.minecraftforge.net' }
+        //mavenLocal()
     }
 }
 
@@ -26,10 +26,9 @@ dependencyResolutionManagement {
     //@formatter:off
     versionCatalogs.register('libs') {
         // Plugins
-        plugin 'javadoc-links', 'io.freefair.javadoc-links'      version '8.14'
         plugin 'licenser',      'net.minecraftforge.licenser'    version '1.2.0'
-        plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.3.0'
-        plugin 'shadow',        'com.gradleup.shadow'            version '9.0.2'
+        plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.3.21'
+        plugin 'shadow',        'com.gradleup.shadow'            version '9.2.2'
 
         // Git
         library 'jgit', 'org.eclipse.jgit', 'org.eclipse.jgit' version '7.2.0.202503040940-r'
