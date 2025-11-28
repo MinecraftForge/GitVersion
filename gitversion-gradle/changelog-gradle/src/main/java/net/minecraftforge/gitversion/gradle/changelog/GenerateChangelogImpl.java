@@ -8,6 +8,7 @@ import net.minecraftforge.gitversion.gradle.common.GitVersionTools;
 import net.minecraftforge.gradleutils.shared.ToolExecBase;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.Input;
@@ -29,10 +30,11 @@ abstract class GenerateChangelogImpl extends ToolExecBase<ChangelogProblems> imp
     @Inject
     public GenerateChangelogImpl() {
         super(GitVersionTools.GITVERSION);
+        this.setDescription("Generates a changelog for this project based on the Git history using Git Version.");
 
-        this.setDescription("Generates a changelog for the project based on the Git history using Git Version.");
+        this.getStandardOutputLogLevel().set(LogLevel.INFO);
 
-        this.getOutputFile().convention(this.getDefaultOutputFile("txt"));
+        this.getOutputFile().convention(this.getOutputFile("changelog.txt"));
 
         this.getBuildMarkdown().convention(false);
 
