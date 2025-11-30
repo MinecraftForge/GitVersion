@@ -27,7 +27,7 @@ dependencyResolutionManagement {
     versionCatalogs.register('libs') {
         // Plugins
         plugin 'licenser',      'net.minecraftforge.licenser'    version '1.2.0'
-        plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.3.32'
+        plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.3.33'
         plugin 'shadow',        'com.gradleup.shadow'            version '9.2.2'
 
         // Git

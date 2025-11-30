@@ -46,13 +46,11 @@ abstract class GenerateChangelogImpl extends ToolExecBase<ChangelogProblems> imp
     @Override
     protected void addArguments() {
         this.args("--changelog");
-        this.args(Map.of(
-            "--project-dir", this.getInputs().getProperties().get("projectPath"),
-            "--output", this.getOutputFile().getLocationOnly(),
-            "--start", this.getStart(),
-            "--url", this.getProjectUrl(),
-            "--plain-text", this.getBuildMarkdown()
-        ));
+        this.args("--project-dir", this.getInputs().getProperties().get("projectPath"));
+        this.args("--output", this.getOutputFile());
+        this.args("--start", this.getStart());
+        this.args("--url", this.getProjectUrl());
+        this.args("--plain-text", this.getBuildMarkdown().map(Object::toString));
 
         super.addArguments();
     }

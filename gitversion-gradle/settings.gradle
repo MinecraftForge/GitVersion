@@ -32,7 +32,7 @@ gradle.beforeProject { Project project ->
 }
 
 dependencyResolutionManagement.versionCatalogs.register('libs') {
-    version 'gradleutils', '3.3.32'
+    version 'gradleutils', '3.3.33'
 
     plugin 'licenser',       'net.minecraftforge.licenser'    version '1.2.0' // https://plugins.gradle.org/plugin/net.minecraftforge.licenser
     plugin 'javadoc-links',  'io.freefair.javadoc-links'      version '8.14'  // https://plugins.gradle.org/plugin/io.freefair.javadoc-links
