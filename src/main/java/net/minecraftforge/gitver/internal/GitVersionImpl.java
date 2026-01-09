@@ -120,7 +120,7 @@ public final class GitVersionImpl implements GitVersionInternal {
                 throw new GitVersionExceptionInternal("Opened repository has no commits");
 
             var head = GitUtils.getHead(this.git);
-            return GitChangelog.generateChangelogFromTo(this.git, Util.orElse(url, () -> GitUtils.buildProjectUrl(this.git)), plainText, from, head, this.tagPrefix, this.getSubprojectPaths());
+            return GitChangelog.generateChangelogFromTo(this.git, Util.orElse(url, () -> GitUtils.buildProjectUrl(this.git)), plainText, from, head, this.tagPrefix, List.of());
         } catch (GitVersionException | GitAPIException | IOException e) {
             if (this.strict) throw new GitVersionExceptionInternal("Failed to generate the changelog", e);
 
