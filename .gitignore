@@ -14,4 +14,4 @@
 /output/
 
 # Jonathan's IntelliJ Fuckery
-/.idea/
+/**/.idea/

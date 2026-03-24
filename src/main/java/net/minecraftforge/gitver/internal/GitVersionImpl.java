@@ -29,11 +29,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 public final class GitVersionImpl implements GitVersionInternal {
     // Git
     private final boolean strict;
+    private final @Nullable String commit;
     private Git git;
     private final Lazy<Info> info = Lazy.of(() -> this.calculateInfo(this::getSubprojectCommitCount));
     private final Lazy<String> url = Lazy.of(this::calculateUrl);
@@ -61,8 +61,9 @@ public final class GitVersionImpl implements GitVersionInternal {
     private final Set<String> allIncludingPaths;
     private final Set<String> allExcludingPaths;
 
-    public GitVersionImpl(File gitDir, File root, File project, GitVersionConfig config, boolean strict) {
+    public GitVersionImpl(File gitDir, File root, File project, GitVersionConfig config, boolean strict, @Nullable String commit) {
         this.strict = strict;
+        this.commit = commit;
 
         this.gitDir = gitDir;
         this.root = root;
@@ -141,14 +142,32 @@ public final class GitVersionImpl implements GitVersionInternal {
         return this.url.get();
     }
 
+    private ObjectId resolve(String ref) {
+        try {
+        	var ret = this.git.getRepository().resolve(ref);
+        	if (ret == null)
+        		throw new IllegalArgumentException("Unknown commit reference: " + ref);
+        	return ret;
+        } catch (IOException e) {
+        	return Util.sneak(e);
+        }
+    }
+
     /** @see #info */
     private Info calculateInfo(CommitCountProvider commitCountProvider) {
         try {
             this.open();
 
+            var commitId = resolve(this.commit == null ? Constants.HEAD : this.commit);
+
             var describedTag = Util.make(this.git.describe(), it -> {
                 it.setTags(true);
                 it.setLong(true);
+                try {
+                	it.setTarget(commitId);
+                } catch (IOException e) {
+                	Util.sneak(e);
+                }
 
                 try {
                     it.setMatch(this.tagPrefix + "[[:digit:]]**");
@@ -180,10 +199,10 @@ public final class GitVersionImpl implements GitVersionInternal {
             var tag = desc[0].substring(Util.indexOf(desc[0], Character::isDigit, 0));
 
             var offset = commitCountProvider.getAsString(this.git, desc[0], desc[1], this.strict);
-            var hash = desc[2];
+            var hash = desc[2]; // Technically this has a 'g' prefix but its been around for so long I don't really care
             var branch = longBranch != null ? Repository.shortenRefName(longBranch) : null;
-            var commit = ObjectId.toString(head.getObjectId());
-            var abbreviatedId = head.getObjectId().abbreviate(8).name();
+            var commit = ObjectId.toString(commitId);
+            var abbreviatedId = commitId.abbreviate(8).name();
 
             return new Info(tag, offset, hash, branch, commit, abbreviatedId);
         } catch (Exception e) {
@@ -337,7 +356,8 @@ public final class GitVersionImpl implements GitVersionInternal {
         if (this.localPath.isEmpty() && this.allExcludingPaths.isEmpty()) return -1;
 
         try {
-            int count = GitUtils.countCommits(git, tag, this.tagPrefix, this.allIncludingPaths, this.allExcludingPaths);
+        	var end = resolve(this.commit == null ? Constants.HEAD : this.commit);
+            int count = GitUtils.countCommits(git, tag, end, this.tagPrefix, this.allIncludingPaths, this.allExcludingPaths);
             return Math.max(count, 0);
         } catch (GitAPIException | IOException e) {
             throw new GitVersionExceptionInternal("Failed to count commits with the following parameters: Tag %s, Include Paths [%s], Exclude Paths [%s]".formatted(tag, String.join(", ", this.allIncludingPaths), String.join(", ", this.allExcludingPaths)));

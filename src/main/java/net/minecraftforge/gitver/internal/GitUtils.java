@@ -85,6 +85,31 @@ final class GitUtils {
     }
 
     /**
+     * Counts commits, for the given Git repository, from the given tag to {@linkplain Constants#HEAD HEAD}. If the
+     * given tag cannot be found, this method will return {@code -1}.
+     * <p>
+     * See {@link #countCommits(Git, Map, ObjectId, String, Iterable, Iterable)} for more information.
+     *
+     * @param git          The git repository to count commits in
+     * @param tag          The tag name to start counting from
+     * @param to           The object ID (typically a commit or tag reference) to stop counting at, typically HEAD
+     * @param includePaths The paths to include in the count
+     * @param excludePaths The paths to exclude from the count
+     * @return The commit count
+     * @throws GitAPIException If an error occurs when running the log command (see
+     *                         {@link org.eclipse.jgit.api.LogCommand#call() LogCommand.call()}
+     * @throws IOException     If an I/O error occurs when reading the Git repository
+     * @see #countCommits(Git, Map, ObjectId, String, Iterable, Iterable)
+     */
+    static int countCommits(Git git, String tag, ObjectId to, String tagPrefix, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
+        var tags = GitUtils.getTagToCommitMap(git);
+        var commitHash = tags.get(tag);
+        if (commitHash == null) return -1;
+
+        return countCommits(git, GitUtils.getCommitToTagMap(git), ObjectId.fromString(commitHash), to, tagPrefix, includePaths, excludePaths);
+    }
+
+    /**
      * Counts commits, for the given Git repository, from the given object ID to {@linkplain Constants#HEAD HEAD}.
      * Additional paths can be given to include or exclude from the count.
      * <p>
@@ -106,6 +131,31 @@ final class GitUtils {
      */
     static int countCommits(Git git, Map<String, String> commitsToTags, ObjectId from, String tagPrefix, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
         return Util.count(getCommitLogFromTo(git, commitsToTags, from, getHead(git), tagPrefix, includePaths, excludePaths));
+    }
+
+    /**
+     * Counts commits, for the given Git repository, from the given object ID to the other given object ID..
+     * Additional paths can be given to include or exclude from the count.
+     * <p>
+     * An important detail to note is that the commit given is <strong>not included</strong> in the count. This means
+     * that if the given commit is also the HEAD, the returned count will be {@code 0}. Additionally, if there are no
+     * commits barring the paths given from the object ID, the count will be {@code -1}. Please handle this
+     * accordingly.
+     *
+     * @param git          The git repository to count commits in
+     * @param from         The object ID (typically a commit or tag reference) to start counting from
+     * @param to           The object ID (typically a commit or tag reference) to stop counting at, typically HEAD
+     * @param includePaths The paths to include in the count
+     * @param excludePaths The paths to exclude from the count
+     * @return The commit count
+     * @throws GitAPIException If an error occurs when running the log command (see
+     *                         {@link org.eclipse.jgit.api.LogCommand#call() LogCommand.call()}
+     * @throws IOException     If an I/O error occurs when reading the Git repository
+     * @see org.eclipse.jgit.api.LogCommand LogCommand
+     * @see <a href="https://git-scm.com/docs/git-log"><code>git-log</code></a>
+     */
+    static int countCommits(Git git, Map<String, String> commitsToTags, ObjectId from, ObjectId to, String tagPrefix, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
+        return Util.count(getCommitLogFromTo(git, commitsToTags, from, to, tagPrefix, includePaths, excludePaths));
     }
 
     /**

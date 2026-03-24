@@ -78,6 +78,8 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
 
         Builder strict(boolean strict);
 
+        Builder commit(@Nullable String ref);
+
         /**
          * Builds the GitVersion instance.
          *

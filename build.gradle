@@ -24,27 +24,10 @@ java {
     withSourcesJar()
 }
 
-final cli = sourceSets.create('cli')
-
 configurations {
-    dependencyScope('cliShadowImplementation')
-    dependencyScope('cliShadowRuntimeOnly')
-
-    resolvable('cliShadowClasspath') {
-        extendsFrom cliShadowImplementation, cliShadowRuntimeOnly
-    }
-
-    named(cli.runtimeClasspathConfigurationName) {
-        extendsFrom runtimeClasspath
-    }
-
-    named(cli.implementationConfigurationName) {
-        extendsFrom cliShadowImplementation
-    }
-
-    named(cli.runtimeOnlyConfigurationName) {
-        extendsFrom cliShadowRuntimeOnly
-    }
+	cli {
+	    extendsFrom implementation
+	}
 }
 
 dependencies {
@@ -60,10 +43,7 @@ dependencies {
     // JSON Output
     implementation libs.gson
 
-    // CLI
-    cliImplementation sourceSets.main.output
-    cliShadowImplementation libs.jopt
-    cliShadowRuntimeOnly libs.slf4j
+    cli project(':gitversion-cli')
 }
 
 license {
@@ -93,10 +73,27 @@ tasks.named('shadowJar', ShadowJar) {
     }
 
     archiveClassifier = 'fatjar'
-    from cli.output
-    configurations = provider { [ project.configurations.getByName('runtimeClasspath'), project.configurations.getByName('cliShadowClasspath') ] }
 
-    minimize()
+    configurations = project.configurations.named('cli').map { [it] }
+
+    enableAutoRelocation = true
+    relocationPrefix = 'net.minecraftforge.gitver.shadow'
+    relocate('net.minecraftforge.gitver', 'net.minecraftforge.gitver')
+    // Rewrite JOpt's message files, so that help text is displayed nicely.
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer) {
+        paths = [ 'Messages.properties$' ]
+        keyTransformer = { key -> 'net.minecraftforge.gitver.shadow.' + key }
+    }
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer)
+
+    minimize {
+        exclude(project(':gitversion-cli'))
+    }
+
+    exclude('OSGI-INF/**')
+    exclude('META-INF/maven/**')
+    exclude('META-INF/proguard/**')
 }
 
 changelog {

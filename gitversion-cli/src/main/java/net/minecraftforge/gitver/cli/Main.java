@@ -83,6 +83,11 @@ public final class Main {
             If the generated changelog should be in plain text instead of Markdown.""")
             .availableIf(changelogO);
 
+        var commitO = parser.accepts("commit",
+    		"The commit or reference to use instead of HEAD")
+    		.availableUnless(changelogO)
+    		.withRequiredArg().ofType(String.class);
+
         var jsonO = parser.accepts("json",
             """
             Use to output the Git Version info as JSON.
@@ -103,6 +108,7 @@ public final class Main {
         var rootDir = options.valueOfOptional(rootDir0).orElse(null);
         var gitDir = options.valueOfOptional(gitDir0).orElse(null);
         var output = options.valueOfOptional(outputO).orElse(null);
+        var commit = options.valueOfOptional(commitO).orElse(null);
         try (var version = GitVersion
             .builder()
             .gitDir(gitDir)
@@ -110,6 +116,7 @@ public final class Main {
             .project(projectDir)
             .config(configFile)
             .strict(strict)
+            .commit(commit)
             .build()
         ) {
             String result;

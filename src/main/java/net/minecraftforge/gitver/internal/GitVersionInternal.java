@@ -33,6 +33,7 @@ public non-sealed interface GitVersionInternal extends GitVersion {
         private @Nullable File root;
         private @Nullable File project;
         private @Nullable GitVersionConfig config;
+        private @Nullable String commit;
         private boolean strict = true;
 
         private Builder() { }
@@ -74,6 +75,12 @@ public non-sealed interface GitVersionInternal extends GitVersion {
         }
 
         @Override
+        public GitVersion.Builder commit(@Nullable String ref) {
+        	this.commit = ref;
+        	return this;
+        }
+
+        @Override
         public GitVersion build() {
             if (this.root == null && this.project == null)
                 throw new IllegalArgumentException("Either the root or project directory must be set");
@@ -100,7 +107,7 @@ public non-sealed interface GitVersionInternal extends GitVersion {
                     }
                 }
 
-                return new GitVersionImpl(this.gitDir, this.root, this.project, this.config, this.strict);
+                return new GitVersionImpl(this.gitDir, this.root, this.project, this.config, this.strict, this.commit);
             } catch (GitVersionException e) {
                 if (!this.strict)
                     return GitVersionImpl.empty(this.project);

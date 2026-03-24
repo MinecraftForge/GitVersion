@@ -27,7 +27,7 @@ dependencyResolutionManagement {
     versionCatalogs.register('libs') {
         // Plugins
         plugin 'licenser',      'net.minecraftforge.licenser'    version '1.2.0'
-        plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.3.33'
+        plugin 'gradleutils',   'net.minecraftforge.gradleutils' version '3.4.1'
         plugin 'shadow',        'com.gradleup.shadow'            version '9.2.2'
 
         // Git
@@ -37,7 +37,7 @@ dependencyResolutionManagement {
         library 'toml', 'org.tomlj', 'tomlj' version '1.1.1'
 
         // JSON Output
-        library 'gson', 'com.google.code.gson', 'gson' version '2.13.1'
+        library 'gson', 'com.google.code.gson', 'gson' version '2.13.2'
 
         // CLI
         library 'jopt',  'net.sf.jopt-simple', 'jopt-simple'  version '6.0-alpha-3'
@@ -48,3 +48,5 @@ dependencyResolutionManagement {
     }
     //@formatter:on
 }
+
+include 'gitversion-cli'
