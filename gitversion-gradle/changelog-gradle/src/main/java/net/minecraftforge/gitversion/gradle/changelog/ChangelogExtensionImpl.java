@@ -86,6 +86,11 @@ abstract class ChangelogExtensionImpl implements ChangelogExtensionInternal {
     }
 
     @Override
+    public TaskProvider<? extends GenerateChangelog> getTask() {
+        return task.get();
+    }
+
+    @Override
     public TaskProvider<? extends CopyChangelog> copyTo(Project project) {
         // isGenerating = true and afterEvaluate ensured
         // See ChangelogUtils#setupChangelogGenerationForPublishingAfterEvaluation

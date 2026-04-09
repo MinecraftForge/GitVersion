@@ -4,10 +4,12 @@
  */
 package net.minecraftforge.gitversion.gradle.changelog;
 
+import org.gradle.api.Action;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderConvertible;
 import org.gradle.api.publish.maven.MavenPublication;
+import org.gradle.api.tasks.TaskProvider;
 
 /// Configuration for the Changelog plugin.
 ///
@@ -67,4 +69,13 @@ public sealed interface ChangelogExtension permits ChangelogExtensionInternal {
     ///
     /// @return The property for if the changelog generation for publishing to all should include subprojects
     Property<Boolean> getIncludeSubprojects();
+
+    /// Retrieves the GenerateChangelog task so that you can configure or use its outputs however you wish.
+    TaskProvider<? extends GenerateChangelog> getTask();
+
+    /// Configure the GenerateChangelog task
+    default TaskProvider<? extends GenerateChangelog> task(Action<? super GenerateChangelog> action) {
+        getTask().configure(action);
+        return getTask();
+    }
 }
