@@ -17,7 +17,7 @@ final projectVendor = 'Forge Development LLC'
 description = 'Used by MinecraftForge projects to calculate project versions based on Git history.'
 base.archivesName = 'gitversion'
 group = 'net.minecraftforge'
-version = gitversion.tagOffset
+version = gitversion.version
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -25,7 +25,7 @@ java {
 }
 
 configurations {
-	cli {
+	register('cli') {
 	    extendsFrom implementation
 	}
 }
@@ -44,7 +44,7 @@ dependencies {
     // JSON Output
     implementation libs.gson
 
-    cli project(':gitversion-cli')
+    cli projects.gitversionCli
 }
 
 license {
@@ -58,7 +58,7 @@ tasks.named('jar', Jar) {
         attributes([
             'Specification-Title'   : gradleutils.displayName,
             'Specification-Vendor'  : projectVendor,
-            'Specification-Version' : gitversion.info.tag,
+            'Specification-Version' : gitversion.info.get().tag,
             'Implementation-Title'  : gradleutils.displayName,
             'Implementation-Vendor' : projectVendor,
             'Implementation-Version': project.version

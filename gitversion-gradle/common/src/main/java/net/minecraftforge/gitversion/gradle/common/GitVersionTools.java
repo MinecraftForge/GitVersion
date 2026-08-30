@@ -13,9 +13,8 @@ public final class GitVersionTools {
 
     // Git Version
     private static final String GITVERSION_NAME = "gitversion";
-    private static final String GITVERSION_VERSION = "0.7.3";
-    private static final String GITVERSION_URL = FORGE_MAVEN + "net/minecraftforge/gitversion/" + GITVERSION_VERSION + "/gitversion-" + GITVERSION_VERSION + "-fatjar.jar";
+    private static final String GITVERSION_VERSION = "0.9.0";
+    private static final String GITVERSION_ARTIFACT = "net.minecraftforge:gitversion:" + GITVERSION_VERSION + ":fatjar";
     private static final int GITVERSION_JAVA = 17;
-    private static final String GITVERSION_MAIN = "net.minecraftforge.gitver.cli.Main";
-    public static final Tool GITVERSION = Tool.of(GITVERSION_NAME, GITVERSION_VERSION, GITVERSION_URL, GITVERSION_JAVA, GITVERSION_MAIN);
+    public static final Tool GITVERSION = Tool.ofForge(GITVERSION_NAME, GITVERSION_ARTIFACT, GITVERSION_JAVA);
 }
