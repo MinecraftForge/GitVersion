@@ -1,9 +1,10 @@
 plugins {
 	id 'application'
+    id 'net.minecraftforge.gitversion'
 }
 
 group = 'net.minecraftforge'
-version = gitversion.tagOffset
+version = gitversion.of(rootProject).version
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -15,7 +16,7 @@ application {
 }
 
 dependencies {
-    implementation rootProject
+    implementation projects.gitversion
     implementation libs.jopt
     runtimeOnly libs.slf4j
 }
