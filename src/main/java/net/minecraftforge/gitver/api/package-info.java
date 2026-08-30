@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 // TODO [Git Version] Documentation
-@NotNullByDefault
+@NullMarked
 package net.minecraftforge.gitver.api;
 
-import org.jetbrains.annotations.NotNullByDefault;
+import org.jspecify.annotations.NullMarked;

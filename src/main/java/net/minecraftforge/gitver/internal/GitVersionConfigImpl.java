@@ -5,9 +5,9 @@
 package net.minecraftforge.gitver.internal;
 
 import net.minecraftforge.gitver.api.GitVersionConfig;
-import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
 import org.tomlj.TomlTable;
@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-@NotNullByDefault
 public record GitVersionConfigImpl(
     Map<String, GitVersionConfig.Project> projects,
     @Override List<? extends RuntimeException> errors
@@ -31,7 +30,7 @@ public record GitVersionConfigImpl(
     static final GitVersionConfig EMPTY = new Empty();
 
     @Override
-    public @Nullable GitVersionConfig.Project getProject(@Nullable String path) {
+    public GitVersionConfig.@Nullable Project getProject(@Nullable String path) {
         return this.projects.get(path);
     }
 
@@ -48,7 +47,7 @@ public record GitVersionConfigImpl(
         }
     }
 
-    public static GitVersionConfig parse(@UnknownNullability File config) throws IOException {
+    public static GitVersionConfig parse(@Nullable File config) throws IOException {
         if (config == null || !config.exists()) return EMPTY;
 
         var toml = Toml.parse(config.toPath(), TomlVersion.V1_0_0);
@@ -71,12 +70,13 @@ public record GitVersionConfigImpl(
 
     public record ProjectImpl(
         @Override String getPath,
+        @Override String[] getBranches,
         @Override String[] getIncludePaths,
         @Override String[] getExcludePaths,
         @Override String getTagPrefix,
         @Override String[] getFilters
     ) implements GitVersionConfigInternal.Project {
-        private static final ProjectImpl DEFAULT_ROOT = new ProjectImpl("", new String[0], new String[0], "", new String[0]);
+        private static final ProjectImpl DEFAULT_ROOT = new ProjectImpl("", new String[0], new String[0], new String[0], "", new String[0]);
         private static final List<GitVersionConfig.Project> DEFAULT_ROOT_LIST = List.of(DEFAULT_ROOT);
 
         private static String getString(TomlTable table, String key) {
@@ -95,20 +95,22 @@ public record GitVersionConfigImpl(
             var root = toml.getTableOrEmpty("root");
             if (root.isEmpty()) return DEFAULT_ROOT;
 
+            var allowedBranches = getStringArray(root, "branches");
             var includePaths = getStringArray(root, "include");
             var excludePaths = getStringArray(root, "exclude");
             var tagPrefix = getString(root, "tag");
             var filters = getStringArray(root, "filters");
-            return new ProjectImpl("", includePaths, excludePaths, tagPrefix, filters);
+            return new ProjectImpl("", allowedBranches, includePaths, excludePaths, tagPrefix, filters);
         }
 
         private static GitVersionConfig.Project parse(String key, TomlTable table) {
             var project = Objects.requireNonNullElse(table.getString("path"), key);
+            var allowedBranches = getStringArray(table, "branches");
             var includePaths = getStringArray(table, "include");
             var excludePaths = getStringArray(table, "exclude");
             var tagPrefix = getString(table, "tag", () -> project.replace("/", "-"));
             var filters = getStringArray(table, "filters");
-            return new ProjectImpl(project, includePaths, excludePaths, tagPrefix, filters);
+            return new ProjectImpl(project, allowedBranches, includePaths, excludePaths, tagPrefix, filters);
         }
 
         @Override
@@ -122,6 +124,7 @@ public record GitVersionConfigImpl(
         }
     }
 
+    @NullUnmarked
     public static final class Empty implements GitVersionConfigInternal {
         private Empty() { }
 
@@ -131,15 +134,15 @@ public record GitVersionConfigImpl(
         }
 
         @Override
-        public Collection<GitVersionConfig.Project> getAllProjects() {
+        public @NonNull Collection<GitVersionConfig.Project> getAllProjects() {
             return ProjectImpl.DEFAULT_ROOT_LIST;
         }
 
         @Override
-        public void validate(@UnknownNullability File root) { }
+        public void validate(File root) { }
 
         @Override
-        public List<? extends RuntimeException> errors() {
+        public @NonNull List<? extends RuntimeException> errors() {
             return List.of();
         }
     }

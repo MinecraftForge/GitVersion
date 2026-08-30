@@ -5,8 +5,10 @@
 package net.minecraftforge.gitver.api;
 
 import net.minecraftforge.gitver.internal.GitVersionConfigInternal;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.tomlj.Toml;
 
 import java.io.File;
@@ -19,6 +21,7 @@ import java.util.List;
  *
  * @see Project
  */
+@NullUnmarked
 public sealed interface GitVersionConfig permits GitVersionConfigInternal {
     /**
      * Gets the project at the given path.
@@ -29,7 +32,7 @@ public sealed interface GitVersionConfig permits GitVersionConfigInternal {
     @Nullable Project getProject(@Nullable String path);
 
     /** @return All projects, including the root project. */
-    Collection<Project> getAllProjects();
+    @NonNull Collection<Project> getAllProjects();
 
     /**
      * Validates this configuration by ensuring that all declared subprojects exist from the given root.
@@ -37,10 +40,10 @@ public sealed interface GitVersionConfig permits GitVersionConfigInternal {
      * @param root The root to validate from
      * @throws IllegalArgumentException If a subproject path does not exist
      */
-    void validate(@UnknownNullability File root) throws IllegalArgumentException;
+    void validate(File root) throws IllegalArgumentException;
 
     /** @return Any errors made during the config TOML parsing */
-    List<? extends RuntimeException> errors();
+    @NonNull List<? extends RuntimeException> errors();
 
     /**
      * Attempts to parse the given config file into a {@link GitVersionConfig} using {@linkplain Toml TOMLJ}. If it
@@ -49,12 +52,15 @@ public sealed interface GitVersionConfig permits GitVersionConfigInternal {
      * @param config The config file
      * @return The parsed config, or an empty config if the file does not exist
      */
-    static GitVersionConfig parse(@UnknownNullability File config) {
+    static @NonNull GitVersionConfig parse(File config) {
         return GitVersionConfigInternal.parse(config);
     }
 
+    @NullMarked
     sealed interface Project permits GitVersionConfigInternal.Project {
         String getPath();
+
+        String[] getBranches();
 
         String[] getIncludePaths();
 

@@ -4,7 +4,7 @@
  */
 package net.minecraftforge.gitver.internal;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;

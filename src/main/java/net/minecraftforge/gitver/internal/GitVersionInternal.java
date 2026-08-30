@@ -7,19 +7,15 @@ package net.minecraftforge.gitver.internal;
 import net.minecraftforge.gitver.api.GitVersion;
 import net.minecraftforge.gitver.api.GitVersionConfig;
 import net.minecraftforge.gitver.api.GitVersionException;
-import org.eclipse.jgit.util.StringUtils;
-import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-@NotNullByDefault
 public non-sealed interface GitVersionInternal extends GitVersion {
     List<String> DEFAULT_ALLOWED_BRANCHES = List.of("master", "main", "HEAD");
     /* BUILDER */
@@ -28,6 +24,7 @@ public non-sealed interface GitVersionInternal extends GitVersion {
         return new Builder();
     }
 
+    @NullUnmarked
     final class Builder implements GitVersion.Builder {
         private @Nullable File gitDir;
         private @Nullable File root;
@@ -39,31 +36,31 @@ public non-sealed interface GitVersionInternal extends GitVersion {
         private Builder() { }
 
         @Override
-        public GitVersion.Builder gitDir(@UnknownNullability File gitDir) {
+        public GitVersion.Builder gitDir(File gitDir) {
             this.gitDir = gitDir;
             return this;
         }
 
         @Override
-        public GitVersion.Builder root(@UnknownNullability File root) {
+        public GitVersion.Builder root(File root) {
             this.root = root != null ? root.getAbsoluteFile() : null;
             return this;
         }
 
         @Override
-        public GitVersion.Builder project(@UnknownNullability File project) {
+        public GitVersion.Builder project(File project) {
             this.project = project != null ? project.getAbsoluteFile() : null;
             return this;
         }
 
         @Override
-        public GitVersion.Builder config(@UnknownNullability File config) {
+        public GitVersion.Builder config(File config) {
             this.config = config != null ? GitVersionConfig.parse(config) : null;
             return this;
         }
 
         @Override
-        public GitVersion.Builder config(GitVersionConfig config) {
+        public GitVersion.Builder config(@NonNull GitVersionConfig config) {
             this.config = config;
             return this;
         }
@@ -118,70 +115,19 @@ public non-sealed interface GitVersionInternal extends GitVersion {
     }
 
 
-    /* VERSIONING */
-
-    @Override
-    default String getTagOffset() {
-        var info = this.getInfo();
-        return "%s.%s".formatted(info.getTag(), info.getOffset());
-    }
-
-    @Override
-    default String getTagOffsetBranch() {
-        return this.getTagOffsetBranch(DEFAULT_ALLOWED_BRANCHES);
-    }
-
-    @Override
-    default String getTagOffsetBranch(@UnknownNullability String... allowedBranches) {
-        return this.getTagOffsetBranch(Arrays.asList(Util.ensure(allowedBranches)));
-    }
-
-    @Override
-    default String getTagOffsetBranch(@UnknownNullability Collection<String> allowedBranches) {
-        allowedBranches = Util.ensure(allowedBranches);
-        var version = this.getTagOffset();
-        if (allowedBranches.isEmpty()) return version;
-
-        var branch = this.getInfo().getBranch(true);
-        return StringUtils.isEmptyOrNull(branch) || allowedBranches.contains(branch) ? version : "%s-%s".formatted(version, branch);
-    }
-
-    @Override
-    default String getMCTagOffsetBranch(@UnknownNullability String mcVersion) {
-        if (StringUtils.isEmptyOrNull(mcVersion))
-            return this.getTagOffsetBranch();
-
-        var allowedBranches = new ArrayList<>(DEFAULT_ALLOWED_BRANCHES);
-        allowedBranches.add(mcVersion);
-        allowedBranches.add(mcVersion + ".0");
-        allowedBranches.add(mcVersion + ".x");
-        allowedBranches.add(mcVersion.substring(0, mcVersion.lastIndexOf('.')) + ".x");
-
-        return this.getMCTagOffsetBranch(mcVersion, allowedBranches);
-    }
-
-    @Override
-    default String getMCTagOffsetBranch(String mcVersion, String... allowedBranches) {
-        return this.getMCTagOffsetBranch(mcVersion, Arrays.asList(allowedBranches));
-    }
-
-    @Override
-    default String getMCTagOffsetBranch(String mcVersion, Collection<String> allowedBranches) {
-        return "%s-%s".formatted(mcVersion, this.getTagOffsetBranch(allowedBranches));
-    }
-
-
     /* INFO */
 
     /**
      * Represents information about a git repository. This can be used to access other information when the standard
      * versioning methods in {@link GitVersion} do not suffice.
      */
-    @NotNullByDefault
     non-sealed interface Info extends GitVersion.Info {
         @Override
         default String getBranch(boolean versionFriendly) {
-            var branch = this.getBranch();
+            return getBranch(this.getBranch(), versionFriendly);
+        }
+
+        static String getBranch(String branch, boolean versionFriendly) {
             if (!versionFriendly || branch.isBlank()) return branch;
 
             if (branch.startsWith("pulls/"))

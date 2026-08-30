@@ -32,7 +32,8 @@ configurations {
 
 dependencies {
     // Static Analysis
-    compileOnly libs.nulls
+    api libs.annotations.jspecify
+    compileOnly libs.annotations.jetbrains
 
     // Git
     implementation libs.jgit

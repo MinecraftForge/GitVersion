@@ -19,7 +19,7 @@ import org.eclipse.jgit.revwalk.filter.OrRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.util.StringUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;

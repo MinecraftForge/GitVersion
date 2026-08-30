@@ -129,7 +129,7 @@ public final class Main {
             } else if (options.has(jsonO)) {
                 result = version.toJson();
             } else {
-                result = version.getTagOffset();
+                result = version.get();
             }
 
             if (output != null)

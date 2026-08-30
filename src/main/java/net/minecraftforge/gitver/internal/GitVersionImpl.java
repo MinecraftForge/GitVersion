@@ -15,7 +15,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.util.StringUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
@@ -47,6 +47,7 @@ public final class GitVersionImpl implements GitVersionInternal {
 
     // Config
     // NOTE: These are not calculated lazily because they are used in both info gen and changelog gen
+    private final List<String> branches;
     private final List<File> includes;
     private final List<File> excludes;
     private final String tagPrefix;
@@ -83,6 +84,7 @@ public final class GitVersionImpl implements GitVersionInternal {
         this.localPath = GitVersionInternal.super.getProjectPath();
         var projectConfig = Objects.requireNonNull(config.getProject(this.localPath));
 
+        this.branches = List.of(projectConfig.getBranches());
         this.includesPaths = makePaths(this.includes = parsePaths(Arrays.asList(projectConfig.getIncludePaths()), false));
         this.excludesPaths = makePaths(this.excludes = parsePaths(Arrays.asList(projectConfig.getExcludePaths()), true));
         this.tagPrefix = this.makeTagPrefix(projectConfig.getTagPrefix());
@@ -99,6 +101,12 @@ public final class GitVersionImpl implements GitVersionInternal {
         this.allExcludingPaths = allExcludingPaths;
     }
 
+    /* VERSIONING */
+
+    @Override
+    public String get() {
+        return this.getInfo().getVersion();
+    }
 
     /* CHANGELOG */
 
@@ -139,7 +147,8 @@ public final class GitVersionImpl implements GitVersionInternal {
 
     @Override
     public @Nullable String getUrl() {
-        return this.url.get();
+        var url = this.url.get();
+        return url.isEmpty() ? null : url;
     }
 
     private ObjectId resolve(String ref) {
@@ -200,11 +209,11 @@ public final class GitVersionImpl implements GitVersionInternal {
 
             var offset = commitCountProvider.getAsString(this.git, desc[0], desc[1], this.strict);
             var hash = desc[2]; // Technically this has a 'g' prefix but its been around for so long I don't really care
-            var branch = longBranch != null ? Repository.shortenRefName(longBranch) : null;
+            var branch = longBranch != null ? Repository.shortenRefName(longBranch) : "HEAD";
             var commit = ObjectId.toString(commitId);
             var abbreviatedId = commitId.abbreviate(8).name();
 
-            return new Info(tag, offset, hash, branch, commit, abbreviatedId);
+            return Info.of(tag, offset, hash, branch, commit, abbreviatedId, this.branches);
         } catch (Exception e) {
             if (this.strict) throw new GitVersionExceptionInternal("Failed to calculate version info", e);
 
@@ -213,18 +222,20 @@ public final class GitVersionImpl implements GitVersionInternal {
     }
 
     /** @see #url */
-    private @Nullable String calculateUrl() {
+    private String calculateUrl() {
         try {
             this.open();
 
-            return GitUtils.buildProjectUrl(this.git);
+            var url = GitUtils.buildProjectUrl(this.git);
+            return url == null ? "" : url;
         } catch (Exception e) {
-            return null;
+            return "";
         }
     }
 
     /** @see GitVersion.Info */
     public record Info(
+        String getVersion,
         String getTag,
         String getOffset,
         String getHash,
@@ -232,7 +243,27 @@ public final class GitVersionImpl implements GitVersionInternal {
         String getCommit,
         String getAbbreviatedId
     ) implements GitVersionInternal.Info {
-        private static final Info EMPTY = new Info("0.0", "0", "00000000", "master", "0000000000000000000000", "00000000");
+        private static final Info EMPTY = new Info("0.0.0", "0.0", "0", "00000000", "master", "0000000000000000000000", "00000000");
+
+        private static Info of(
+            String tag,
+            String offset,
+            String hash,
+            String branch,
+            String commit,
+            String abbreviatedId,
+            List<String> allowedBranches
+        ) {
+            var version = new StringBuilder().append(tag).append('.').append(offset);
+
+            if (!allowedBranches.isEmpty()) {
+                // branch is already non version friendly
+                if (StringUtils.isEmptyOrNull(branch) || "HEAD".equals(branch) || !allowedBranches.contains(branch))
+                    version.append('-').append(GitVersionInternal.Info.getBranch(branch, true));
+            }
+
+            return new Info(version.toString(), tag, offset, hash, branch, commit, abbreviatedId);
+        }
     }
 
 
@@ -249,6 +280,11 @@ public final class GitVersionImpl implements GitVersionInternal {
             return "";
 
         return !tagPrefix.endsWith("-") ? tagPrefix + "-" : tagPrefix;
+    }
+
+    @Override
+    public @Unmodifiable Collection<String> getBranches() {
+        return this.branches;
     }
 
     @Override
@@ -403,6 +439,11 @@ public final class GitVersionImpl implements GitVersionInternal {
 
     public record Empty(@Nullable File project) implements GitVersionInternal {
         @Override
+        public String get() {
+            return "0.0.0";
+        }
+
+        @Override
         public String generateChangelog(@Nullable String start, @Nullable String url, boolean plainText) throws GitVersionException {
             throw new GitVersionExceptionInternal("Cannot generate a changelog without a repository");
         }
@@ -443,6 +484,11 @@ public final class GitVersionImpl implements GitVersionInternal {
                 return this.project;
 
             throw new GitVersionExceptionInternal("Cannot get project directory without a project");
+        }
+
+        @Override
+        public @Unmodifiable Collection<String> getBranches() {
+            throw new GitVersionExceptionInternal("Cannot get allowed branches from an empty repository");
         }
 
         @Override public @Unmodifiable Collection<File> getIncludes() {

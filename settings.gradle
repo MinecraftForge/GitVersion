@@ -44,7 +44,8 @@ dependencyResolutionManagement {
         library 'slf4j', 'org.slf4j',          'slf4j-simple' version '1.7.36'
 
         // Static Analysis
-        library 'nulls', 'org.jetbrains', 'annotations' version '26.0.2'
+        library 'annotations-jspecify',  'org.jspecify',  'jspecify'    version '1.0.1'
+        library 'annotations-jetbrains', 'org.jetbrains', 'annotations' version '26.1.0'
     }
     //@formatter:on
 }

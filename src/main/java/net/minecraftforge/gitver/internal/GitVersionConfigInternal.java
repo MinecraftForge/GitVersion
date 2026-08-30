@@ -5,13 +5,15 @@
 package net.minecraftforge.gitver.internal;
 
 import net.minecraftforge.gitver.api.GitVersionConfig;
-import org.jetbrains.annotations.UnknownNullability;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 
 import java.io.File;
 import java.io.IOException;
 
+@NullUnmarked
 public non-sealed interface GitVersionConfigInternal extends GitVersionConfig {
-    static GitVersionConfig parse(@UnknownNullability File config) {
+    static @NonNull GitVersionConfig parse(File config) {
         try {
             return GitVersionConfigImpl.parse(config);
         } catch (IOException e) {

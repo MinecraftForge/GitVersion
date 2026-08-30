@@ -6,21 +6,22 @@ package net.minecraftforge.gitver.api;
 
 import net.minecraftforge.gitver.internal.GitVersionImpl;
 import net.minecraftforge.gitver.internal.GitVersionInternal;
-import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * The heart of the GitVersion library. Information about how GitVersion operates can be found on the
  * <a href="https://github.com/MinecraftForge/GitVersion">path page</a>.
  */
-public sealed interface GitVersion extends AutoCloseable permits GitVersionInternal {
+public sealed interface GitVersion extends Supplier<String>, AutoCloseable permits GitVersionInternal {
     /* BUILDER */
 
     /**
@@ -41,6 +42,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
      * automatically from the project directory. If the git directory is not set, it will default to {@code .git} in the
      * root directory.
      */
+    @NullUnmarked
     sealed interface Builder permits GitVersionInternal.Builder {
         /**
          * Sets the git directory for the GitVersion instance. Ideally, this should be located in the root directory.
@@ -48,7 +50,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
          * @param gitDir The git directory
          * @return This builder
          */
-        Builder gitDir(@UnknownNullability File gitDir);
+        Builder gitDir(File gitDir);
 
         /**
          * Sets the root directory for the GitVersion instance.
@@ -56,7 +58,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
          * @param root The root directory
          * @return This builder
          */
-        Builder root(@UnknownNullability File root);
+        Builder root(File root);
 
         /**
          * Sets the project directory for the GitVersion instance.
@@ -64,9 +66,9 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
          * @param project The project directory
          * @return This builder
          */
-        Builder project(@UnknownNullability File project);
+        Builder project(File project);
 
-        Builder config(@UnknownNullability File config);
+        Builder config(File config);
 
         /**
          * Sets the config to use for the GitVersion instance.
@@ -74,7 +76,7 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
          * @param config The config
          * @return This builder
          */
-        Builder config(GitVersionConfig config);
+        Builder config(@NonNull GitVersionConfig config);
 
         Builder strict(boolean strict);
 
@@ -95,55 +97,17 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
 
     /**
      * Calculates a version number in the form
-     * <code>{@link GitVersionImpl.Info#getTag() tag}.{@link GitVersionImpl.Info#getOffset() offset}</code>.
+     * <code>{@link GitVersionImpl.Info#getTag() tag}.{@link GitVersionImpl.Info#getOffset() offset}</code>. The default
+     * GitVersion implementation will cache this version after it has been first queried.
      * <p>
-     * For example, if your current tag is {@code 1.0} and 5 commits have been made since the tagged commit, then the
-     * resulting version number will be {@code 1.0.5}.
+     * If the {@code .gitversion.toml} config specifies branches, the current branch must match that within the branches
+     * String array (or it must be a detached HEAD). If it doesn't match, <code>-{@link Info#getBranch(boolean) branch}</code>
+     * will be appended to the version number.
      *
-     * @return The calculated version
+     * @return The calculated version number.
      */
-    String getTagOffset();
-
-    /** @see #getTagOffsetBranch(Collection) */
-    String getTagOffsetBranch();
-
-    /** @see #getTagOffsetBranch(Collection) */
-    String getTagOffsetBranch(@UnknownNullability String... allowedBranches);
-
-    /**
-     * Calculates a version number using {@link #getTagOffset()}. If the current branch is not included in the defined
-     * list of allowed branches, it will be appended to the version number. It is important to note that any instances
-     * of the forward-slash character ({@code /}) will be replaced with a hyphen ({@code -}).
-     * <p>
-     * For example, if your current tag is {@code 2.3}, 6 commits have been made since the tagged commit, and you are on
-     * a branch named {@literal "feature/cool-stuff"}, then the resulting version number will be
-     * {@code 2.3.6-feature-cool-stuff}.
-     *
-     * @param allowedBranches A list of allowed branches; the current branch is appended if not in this list
-     * @return The calculated version
-     * @see #getTagOffset()
-     */
-    String getTagOffsetBranch(@UnknownNullability Collection<String> allowedBranches);
-
-    /** @see #getMCTagOffsetBranch(String, Collection) */
-    String getMCTagOffsetBranch(@UnknownNullability String mcVersion);
-
-    /** @see #getMCTagOffsetBranch(String, Collection) */
-    String getMCTagOffsetBranch(String mcVersion, String... allowedBranches);
-
-    /**
-     * Calculates a version number using {@link #getTagOffsetBranch(String...)}, additionally prepending the given
-     * Minecraft version.
-     * <p>
-     * For example, if your current tag is {@code 5.0}, 2 commits have been made since the tagged commit, you are on a
-     * branch named {@literal "master"} which is included in the allowed branches, and the given Minecraft version is
-     * {@code 1.21.4}, then the resulting version number will be {@code 1.21.4-5.0.2}.
-     *
-     * @param mcVersion       The minecraft version
-     * @param allowedBranches A list of allowed branches
-     * @return The calculated version
-     */
-    String getMCTagOffsetBranch(String mcVersion, Collection<String> allowedBranches);
+    @Override
+    String get();
 
 
     /* CHANGELOG */
@@ -190,8 +154,10 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
      * Represents information about a git repository. This can be used to access other information when the standard
      * versioning methods in {@link GitVersion} do not suffice.
      */
-    @NotNullByDefault
     sealed interface Info extends Serializable permits GitVersionInternal.Info {
+        /** @return The calculated version */
+        String getVersion();
+
         /** @return The current tag as described by the Git repository using the applied filters */
         String getTag();
 
@@ -238,6 +204,8 @@ public sealed interface GitVersion extends AutoCloseable permits GitVersionInter
 
     /** @return The tag prefix used when filtering tags */
     String getTagPrefix();
+
+    @Unmodifiable Collection<String> getBranches();
 
     /** @return The filters used when filtering tags (excluding the {@linkplain #getTagPrefix() tag prefix}) */
     @Unmodifiable Collection<String> getFilters();
