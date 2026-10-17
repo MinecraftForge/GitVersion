@@ -95,7 +95,8 @@ public non-sealed interface GitVersionInternal extends GitVersion {
                 this.config = GitVersionConfig.parse(new File(this.root, ".gitversion.toml"));
 
             try {
-                if (this.project.compareTo(this.root) > 0 && this.config.getProject(GitUtils.getRelativePath(this.root, this.project)) == null) {
+                var relative = GitUtils.getRelativePath(this.root, this.project);
+                if (this.project.compareTo(this.root) > 0 && this.config.getProject(relative) == null) {
                     for (var project = this.project.getParentFile(); project.compareTo(this.root) >= 0; project = project.getParentFile()) {
                         if (this.config.getProject(GitUtils.getRelativePath(this.root, project)) != null) {
                             this.project = project;

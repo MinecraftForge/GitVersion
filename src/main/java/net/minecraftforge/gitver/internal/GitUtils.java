@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -80,8 +81,9 @@ final class GitUtils {
         var tags = GitUtils.getTagToCommitMap(git);
         var commitHash = tags.get(tag);
         if (commitHash == null) return -1;
+        var from = ObjectId.fromString(commitHash);
 
-        return countCommits(git, GitUtils.getCommitToTagMap(git), ObjectId.fromString(commitHash), tagPrefix, includePaths, excludePaths);
+        return countCommits(git, tags, from, tagPrefix, includePaths, excludePaths);
     }
 
     /**
@@ -105,8 +107,9 @@ final class GitUtils {
         var tags = GitUtils.getTagToCommitMap(git);
         var commitHash = tags.get(tag);
         if (commitHash == null) return -1;
+        var from = ObjectId.fromString(commitHash);
 
-        return countCommits(git, GitUtils.getCommitToTagMap(git), ObjectId.fromString(commitHash), to, tagPrefix, includePaths, excludePaths);
+        return countCommits(git, tags, from, to, tagPrefix, includePaths, excludePaths);
     }
 
     /**
@@ -155,7 +158,8 @@ final class GitUtils {
      * @see <a href="https://git-scm.com/docs/git-log"><code>git-log</code></a>
      */
     static int countCommits(Git git, Map<String, String> commitsToTags, ObjectId from, ObjectId to, String tagPrefix, Iterable<String> includePaths, Iterable<String> excludePaths) throws GitAPIException, IOException {
-        return Util.count(getCommitLogFromTo(git, commitsToTags, from, to, tagPrefix, includePaths, excludePaths));
+        var commits = getCommitLogFromTo(git, commitsToTags, from, to, tagPrefix, includePaths, excludePaths);
+        return Util.count(commits);
     }
 
     /**
@@ -242,22 +246,40 @@ final class GitUtils {
         boolean hasFilters = hasIncludes || hasExcludes;
 
         // TODO [GitVersion][JGit] PR in a solution for creating an OR rev filter
-        return Util.make((RevWalk) log.call(), walk -> {
-            if (!hasFilters || StringUtils.isEmptyOrNull(tagPrefix) || commitsToTags == null || commitsToTags.isEmpty()) return;
+        var walk = (RevWalk)log.call();
+        if (!hasFilters || StringUtils.isEmptyOrNull(tagPrefix) || commitsToTags == null || commitsToTags.isEmpty())
+            return walk;
 
-            walk.setRevFilter(OrRevFilter.create(new TreeRevFilter(walk, walk.getTreeFilter()), new RevFilter() {
-                @Override
-                public boolean include(RevWalk walker, RevCommit cmit) throws StopWalkException {
-                    return commitsToTags.getOrDefault(ObjectId.toString(cmit), "").startsWith(tagPrefix);
-                }
+        var treeFilter = new TreeRevFilter(walk, walk.getTreeFilter());
 
-                @Override
-                public RevFilter clone() {
-                    throw new UnsupportedOperationException();
-                }
-            }));
-            walk.setTreeFilter(null);
-        });
+        var tagCommits = new HashSet<String>();
+        for (var entry : commitsToTags.entrySet()) {
+            if (entry.getKey().startsWith(tagPrefix))
+                tagCommits.add(entry.getValue());
+        }
+        var includeTags = new IncludeTagCommits(tagCommits);
+
+        walk.setRevFilter(OrRevFilter.create(treeFilter, includeTags));
+        walk.setTreeFilter(null);
+        return walk;
+    }
+
+    private static class IncludeTagCommits extends RevFilter {
+        private final Set<String> tagCommits;
+
+        private IncludeTagCommits(Set<String> commitTags) {
+            this.tagCommits = commitTags;
+        }
+
+        @Override
+        public boolean include(RevWalk walker, RevCommit cmit) throws StopWalkException {
+            return tagCommits.contains(ObjectId.toString(cmit));
+        }
+
+        @Override
+        public RevFilter clone() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**
